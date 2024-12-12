@@ -44,6 +44,30 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
+void RenderLoop(const bool &bRenderNext, std::shared_ptr<Dottik::Graphics::Render::RenderManager> renderManager) {
+    while (bRenderNext) {
+        if (0 != g_resizeTarget.x && 0 != g_resizeTarget.y) {
+            DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
+                      "Resizing buffers...");
+            renderManager->ResizeRender(
+                static_cast<UINT>(g_resizeTarget.x), static_cast<UINT>(g_resizeTarget.y));
+            g_resizeTarget = ImVec2{0.0f, 0.0f};
+        }
+
+        if (renderManager->IsRenderingEnabled()) {
+            renderManager->PrepareRender();
+            if (renderManager->Render() == Dottik::Graphics::Render::RenderStatus::Failure) {
+                DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
+                          "Failed to render successfully (Render Failure)");
+            }
+        } else {
+            DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
+                      "Window Occluded [X]");
+        }
+    }
+    renderManager->CleanUp();
+}
+
 int wmain(const int argc, const wchar_t **argv, const wchar_t **envp) {
     WNDCLASSEXW wndClass = {
         sizeof(wndClass), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr,
@@ -72,40 +96,21 @@ int wmain(const int argc, const wchar_t **argv, const wchar_t **envp) {
 
     bool bRenderNext{true};
 
+    std::thread(RenderLoop, bRenderNext, renderManager).detach();
+
     while (bRenderNext) {
         _mm_pause();
 
         MSG msg;
-        if (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
+        if (::PeekMessageW(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
             ::TranslateMessage(&msg);
-            ::DispatchMessage(&msg);
+            ::DispatchMessageW(&msg);
             if (msg.message == WM_QUIT) {
                 bRenderNext = false;
                 break;
             }
         }
-
-        if (0 != g_resizeTarget.x && 0 != g_resizeTarget.y) {
-            DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
-                      "Resizing buffers...");
-            renderManager->ResizeRender(
-                static_cast<UINT>(g_resizeTarget.x), static_cast<UINT>(g_resizeTarget.y));
-            g_resizeTarget = ImVec2{0.0f, 0.0f};
-        }
-
-        if (renderManager->IsRenderingEnabled()) {
-            renderManager->PrepareRender();
-            if (renderManager->Render() == Dottik::Graphics::Render::RenderStatus::Failure) {
-                DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
-                          "Failed to render successfully (Render Failure)");
-            }
-        } else {
-            DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
-                      "Window Occluded [X]");
-        }
     }
-
-    renderManager->CleanUp();
 
     return 0;
 }
