@@ -87,8 +87,6 @@ namespace Dottik::Graphics::Render {
         if (this->m_bDisposed) return RenderStatus::Failure;
         if (!this->CanRender()) return RenderStatus::NotRendering;
 
-        // TODO: Implement Pre-Render step. Implement Render step completely.
-
         ImGui::Render();
 
         constexpr float clearColor[4] = {
@@ -158,7 +156,7 @@ namespace Dottik::Graphics::Render {
 
         this->ClearRenderTarget();
 
-        HRESULT res = this->m_pSwapchain->ResizeBuffers(0, dwWidth, dwHeight, DXGI_FORMAT_UNKNOWN, 0);
+        HRESULT res = this->m_pSwapchain->ResizeBuffers(2, dwWidth, dwHeight, DXGI_FORMAT_UNKNOWN, 0);
 
         if (res != S_OK)
             throw Dottik::Exceptions::RenderInitializationError(
