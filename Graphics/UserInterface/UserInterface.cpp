@@ -19,7 +19,6 @@ namespace Dottik::Graphics::Render {
     }
 
     bool UserInterface::Initialize() {
-        return true;
         if (this->IsInitialized())
             return false;
 
@@ -28,7 +27,7 @@ namespace Dottik::Graphics::Render {
             UI::UIPage{std::make_shared<Dottik::Graphics::Render::UI::Pages::CreditsPage>(), "Credits"},
         };
 
-        this->m_pPagedWindow = std::make_shared<UI::PagedWindow>(std::vector<UI::UIPage>{}, "Page Monitor V2", 3);
+        this->m_pPagedWindow = std::make_shared<UI::PagedWindow>(pages, "Page Monitor V2", 3);
         this->EnableRender();
         this->m_pPagedWindow->EnableRender();
         this->m_bIsInitialized = true;

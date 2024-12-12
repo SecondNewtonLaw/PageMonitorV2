@@ -13,6 +13,10 @@ namespace Dottik::Graphics::Render {
     std::shared_ptr<RenderManager> RenderManager::pInstance;
 
     RenderManager::~RenderManager() {
+        if (this->m_bIsDisposed)
+            return;
+
+        this->CleanUp();
     }
 
     void RenderManager::ResizeRender(const UINT dwWidth, const UINT dwHeight) {
@@ -24,7 +28,6 @@ namespace Dottik::Graphics::Render {
 
     void RenderManager::PrepareRender() const {
         this->m_pRenderBackend->PrepareRender();
-        ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
     }
 
@@ -45,6 +48,9 @@ namespace Dottik::Graphics::Render {
     }
 
     void RenderManager::CleanUp() {
+        if (this->m_bIsDisposed)
+            return;
+
         for (const auto &obj: this->m_renderList)
             delete obj;
 
@@ -52,6 +58,7 @@ namespace Dottik::Graphics::Render {
         this->m_pRenderBackend->CleanUp();
         ::DestroyWindow(this->m_hWnd);
         ::UnregisterClassW(this->m_hWndClass.lpszClassName, this->m_hWndClass.hInstance);
+        this->m_bIsDisposed = true;
     }
 
     void RenderManager::AddToRenderList(Renderable *renderable) {
@@ -84,7 +91,7 @@ namespace Dottik::Graphics::Render {
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 
-        return this->Initialize() && this->m_pRenderBackend->Initialize();
+        return this->Initialize();
     }
 
     bool RenderManager::IsInitialized() {
@@ -94,9 +101,8 @@ namespace Dottik::Graphics::Render {
     }
 
     bool RenderManager::Initialize() {
-        ImGui_ImplWin32_Init(this->m_hWnd);
         this->m_bIsInitialized = true;
-        return true;
+        return this->m_pRenderBackend->Initialize();
     }
 
     bool RenderManager::IsRenderingEnabled() const {

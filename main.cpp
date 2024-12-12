@@ -57,9 +57,9 @@ int wmain(const int argc, const wchar_t **argv, const wchar_t **envp) {
 
     Dottik::Logger::GetSingleton()->Initialize(true);
 
-    auto renderManager = Dottik::Graphics::Render::RenderManager::GetSingleton();
+    const auto renderManager = Dottik::Graphics::Render::RenderManager::GetSingleton();
 
-    auto nRenderer = std::make_shared<Dottik::Graphics::Render::DX11>(hWnd);
+    const auto nRenderer = std::make_shared<Dottik::Graphics::Render::DX11>(hWnd);
 
     ::ShowWindow(hWnd, SW_SHOWDEFAULT);
     ::UpdateWindow(hWnd);

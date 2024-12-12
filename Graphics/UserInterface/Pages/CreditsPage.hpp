@@ -30,14 +30,14 @@ namespace Dottik::Graphics::Render::UI::Pages {
     };
 
     class CreditsPage final : public Dottik::Graphics::Render::Renderable {
-        std::vector<std::shared_ptr<Collaborator>> m_contributorList;
+        std::vector<std::shared_ptr<Collaborator> > m_contributorList;
         std::shared_ptr<Collaborator> m_dottik;
-        std::shared_ptr<Collaborator> m_pixeluted;
 
     public:
         CreditsPage();
-        ~CreditsPage() override = default;
+
+        ~CreditsPage() override;
+
         void Render(ImGuiContext *pContext) override;
     };
-
 } // namespace RbxStu::Render::UI::Pages

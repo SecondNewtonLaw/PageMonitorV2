@@ -8,15 +8,8 @@
 
 namespace Dottik::Graphics::Render::UI::Pages {
     class SettingsPage final : public Dottik::Graphics::Render::Renderable {
-        static std::shared_ptr<SettingsPage> m_pInstance;
-        std::uintptr_t m_connectionId;
-        std::string m_szRbxCrashKey;
-        bool m_bEnableExperimentalFunctions = false;
-
     public:
-        static std::shared_ptr<SettingsPage> GetSingleton();
-
-        SettingsPage();
+        SettingsPage() = default;
 
         ~SettingsPage() override = default;
 

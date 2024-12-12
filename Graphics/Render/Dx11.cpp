@@ -71,6 +71,7 @@ namespace Dottik::Graphics::Render {
 
         this->CreateRenderTarget();
 
+        ImGui_ImplWin32_Init(this->m_hWindow);
         ImGui_ImplDX11_Init(this->m_pDevice, this->m_pImmediateContext);
 
         return true;
@@ -78,6 +79,7 @@ namespace Dottik::Graphics::Render {
 
     void DX11::PrepareRender() {
         if (this->m_bDisposed) return;
+        ImGui_ImplWin32_NewFrame();
         ImGui_ImplDX11_NewFrame();
     }
 

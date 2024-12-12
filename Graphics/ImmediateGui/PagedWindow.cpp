@@ -108,7 +108,6 @@ namespace Dottik::Graphics::Render::UI {
     }
 
     void PagedWindow::Render(ImGuiContext *pContext) {
-        return;
         ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_Once);
         ImGui::Begin("RbxStu::Render::UI::PagedWindow", nullptr, ImGuiWindowFlags_NoTitleBar);
 

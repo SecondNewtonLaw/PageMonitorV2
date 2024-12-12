@@ -19,6 +19,7 @@ namespace Dottik::Graphics::Render {
         HWND m_hWnd;
         std::list<Renderable *> m_renderList;
         WNDCLASSEXW m_hWndClass;
+        bool m_bIsDisposed;
 
     public:
         ~RenderManager() override;;
