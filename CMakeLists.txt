@@ -64,8 +64,6 @@ add_executable(${PROJECT_NAME}
         Graphics/RenderableStub.hpp
         Graphics/Render/RenderBackend.hpp
         Exceptions/RenderInitializationError.hpp
-        Graphics/Render/WindowManager.cpp
-        Graphics/Render/WindowManager.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})

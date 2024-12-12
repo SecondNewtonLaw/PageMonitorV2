@@ -46,5 +46,7 @@ namespace Dottik::Graphics::Render {
         bool Initialize() override;
 
         bool IsRenderingEnabled() const;
+
+        RECT GetWindowSize() const;
     };
 } // Dottik::Graphics::Render

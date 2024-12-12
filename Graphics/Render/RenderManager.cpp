@@ -108,4 +108,10 @@ namespace Dottik::Graphics::Render {
     bool RenderManager::IsRenderingEnabled() const {
         return this->m_pRenderBackend->CanRender();
     }
+
+    RECT RenderManager::GetWindowSize() const {
+        RECT rect;
+        GetClientRect(this->m_hWnd, &rect);
+        return rect;
+    }
 }

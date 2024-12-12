@@ -5,8 +5,10 @@
 #include "PagedWindow.hpp"
 #include <Logger.hpp>
 
+#include "AssemblyObfuscations.hpp"
 #include "Graphics/Color4.hpp"
 #include "Graphics/RenderableStub.hpp"
+#include "Graphics/Render/RenderManager.hpp"
 
 namespace Dottik::Graphics::Render::UI {
     PagedWindow::PagedWindow(const std::vector<UIPage> &pages, const std::string &szWindowName,
@@ -41,6 +43,8 @@ namespace Dottik::Graphics::Render::UI {
 
         this->m_pages.emplace_back(std::make_shared<Dottik::Graphics::Render::RenderableStub>(), "~~ ~~", true);
         // this->m_pages.emplace_back(std::make_shared<RbxStu::Render::RenderableStub>(), "~~ ~~"); // Push stub
+
+        this->m_bExclusive = true;
     }
 
     PagedWindow::~PagedWindow() { this->m_pages.clear(); }
@@ -108,8 +112,15 @@ namespace Dottik::Graphics::Render::UI {
     }
 
     void PagedWindow::Render(ImGuiContext *pContext) {
-        ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_Once);
-        ImGui::Begin("RbxStu::Render::UI::PagedWindow", nullptr, ImGuiWindowFlags_NoTitleBar);
+        if (this->m_bExclusive) {
+            auto winSize = RenderManager::GetSingleton()->GetWindowSize();
+            ImGui::SetNextWindowPos(ImVec2(0, 0));
+            ImGui::SetNextWindowSize(ImVec2(winSize.right, winSize.bottom), ImGuiCond_Always);
+        } else {
+            ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_Once);
+        }
+        ImGui::Begin("RbxStu::Render::UI::PagedWindow", nullptr,
+                     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
         const auto currentPageIndex = this->m_dwCurrentPageIndex;
         this->RenderPageButtons();
