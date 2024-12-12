@@ -44,7 +44,7 @@ namespace Dottik::Graphics::Render {
     }
 
     bool RenderManager::UseVSync() const {
-        return true;
+        return false;
     }
 
     void RenderManager::CleanUp() {
