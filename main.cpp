@@ -65,6 +65,7 @@ void RenderLoop(const bool &bRenderNext, std::shared_ptr<Dottik::Graphics::Rende
                       "Window Occluded [X]");
         }
     }
+
     renderManager->CleanUp();
 }
 

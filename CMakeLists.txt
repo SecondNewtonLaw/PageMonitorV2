@@ -64,6 +64,12 @@ add_executable(${PROJECT_NAME}
         Graphics/RenderableStub.hpp
         Graphics/Render/RenderBackend.hpp
         Exceptions/RenderInitializationError.hpp
+        Dumper/Dumper.cpp
+        Dumper/Dumper.hpp
+        Dumper/Readers/RemoteReader.cpp
+        Dumper/Readers/RemoteReader.hpp
+        Dumper/Readers/WinApi.cpp
+        Dumper/Readers/WinApi.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
