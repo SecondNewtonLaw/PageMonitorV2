@@ -29,6 +29,10 @@ namespace Dottik::Dumper {
 
             return basicInfo;
         }
+
+        HANDLE GetProcessHandle() const {
+            return this->m_hProcess;
+        }
     };
 } // Dumper
 // Dottik
