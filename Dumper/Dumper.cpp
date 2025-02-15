@@ -14,15 +14,22 @@
 #include "ImageDumper.hpp"
 
 namespace Dottik::Dumper {
-    Dumper::Dumper(const std::int32_t dwProcessId, std::shared_ptr<Dottik::Dumper::RemoteReader> reader) {
+    Dumper::Dumper(const std::uint32_t dwProcessId, std::shared_ptr<Dottik::Dumper::WinApi> reader) {
         this->m_dwProcessId = dwProcessId;
         this->m_reader = reader;
+        this->m_hProcess = reader->GetProcessHandle();
+    }
+
+    Dumper::Dumper(std::uint32_t dwProcessId, std::shared_ptr<Dottik::Dumper::RemoteReader> reader, HANDLE hProcess) {
+        this->m_dwProcessId = dwProcessId;
+        this->m_reader = reader;
+        this->m_hProcess = hProcess;
     }
 
     std::vector<ProcessImage> Dumper::GetAllRemoteProcessModules() {
         HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, this->m_dwProcessId);
 
-                ASSERT(hSnapshot != nullptr && hSnapshot != INVALID_HANDLE_VALUE, "failed to create snapshot.");
+        ASSUME(hSnapshot != nullptr && hSnapshot != INVALID_HANDLE_VALUE, "failed to create snapshot.");
 
         MODULEENTRY32W entry{};
         entry.dwSize = sizeof(MODULEENTRY32W);
@@ -33,6 +40,7 @@ namespace Dottik::Dumper {
             images.emplace_back(entry.szModule, entry.szExePath, entry.th32ProcessID, entry.modBaseSize,
                                 entry.hModule, static_cast<void *>(entry.modBaseAddr));
         } while (Module32NextW(hSnapshot, &entry) == TRUE);
+        CloseHandle(hSnapshot);
 
         return images;
     }
@@ -43,19 +51,20 @@ namespace Dottik::Dumper {
         std::vector<std::future<std::pair<ProcessImage, std::vector<std::byte>>>> futures;
 
         for (const auto &module: modules) {
-            futures.push_back(std::async(std::launch::async, [this, &module]() {
-                auto imageDumper = Dottik::Dumper::PE::ImageDumper(module, this->m_reader);
+            auto imageDumper = std::make_shared<Dottik::Dumper::PE::ImageDumper>(module, this->m_reader, this);
+            imageDumper->BuildInitialImage();
 
-                imageDumper.BuildInitialImage();
-
-                imageDumper.ResolveInitialSections();
-
-                imageDumper.ResolveEncryptedSections();
+            imageDumper->ResolveInitialSections();
+            imageDumper->GetOrGenerateSectionInformation();
+            futures.push_back(std::async(std::launch::async, [this, imageDumper, &module]() {
+                auto hasEncryptedSections = imageDumper->ContainsEncryptedSections();
+                if (hasEncryptedSections)
+                    imageDumper->ResolveEncryptedSections();
 
                 // TODO: Implement Import resolution
                 // TODO: Implement section resolution [Unencrypted is done!].
 
-                return std::pair{module, imageDumper.GetRemoteImage()};
+                return std::pair{module, imageDumper->GetRemoteImage()};
             }));
         }
 
@@ -65,7 +74,7 @@ namespace Dottik::Dumper {
 
         while (!futures.empty()) {
             for (auto start = futures.begin(); start != futures.end() && !futures.empty();) {
-                if (start->wait_for(std::chrono::milliseconds{2000}) == std::future_status::timeout) {
+                if (start->wait_for(std::chrono::milliseconds{20}) == std::future_status::timeout) {
                     ++start;
                     continue;
                 }
@@ -85,6 +94,10 @@ namespace Dottik::Dumper {
         }
 
         return {};
+    }
+
+    HANDLE Dumper::GetProcessHandle() const {
+        return this->m_hProcess;
     }
 } // Dumper
 // Dottik

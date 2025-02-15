@@ -15,6 +15,7 @@
 #include <libassert/assert.hpp>
 #include <memory>
 #include <thread>
+#include <TlHelp32.h>
 
 ImVec2 g_resizeTarget;
 
@@ -33,8 +34,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 return 0;
 
             g_resizeTarget = ImVec2{
-                static_cast<float>(static_cast<UINT>(LOWORD(lParam))),
-                static_cast<float>(static_cast<UINT>(HIWORD(lParam)))
+                    static_cast<float>(static_cast<UINT>(LOWORD(lParam))),
+                    static_cast<float>(static_cast<UINT>(HIWORD(lParam)))
             };
             return 0;
         case WM_SYSCOMMAND:
@@ -53,13 +54,13 @@ void RenderLoop(const bool &bRenderNext, std::shared_ptr<Dottik::Graphics::Rende
     while (bRenderNext) {
         if (0 != g_resizeTarget.x && 0 != g_resizeTarget.y) {
             renderManager->ResizeRender(
-                static_cast<UINT>(g_resizeTarget.x), static_cast<UINT>(g_resizeTarget.y));
+                    static_cast<UINT>(g_resizeTarget.x), static_cast<UINT>(g_resizeTarget.y));
             g_resizeTarget = ImVec2{0.0f, 0.0f};
         }
 
         if (renderManager->IsRenderingEnabled()) {
             renderManager->PrepareRender();
-            ASSERT(renderManager->Render() == Dottik::Graphics::Render::RenderStatus::Success);
+                    ASSERT(renderManager->Render() == Dottik::Graphics::Render::RenderStatus::Success);
         } else {
             DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
                       "Window Occluded [X]");
@@ -114,13 +115,72 @@ void InitializeRenderGui() {
     }
 }
 
+DWORD GetProcessIdByName(const char *szProcessName) {
+    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+            ASSERT(hSnapshot != nullptr && hSnapshot != INVALID_HANDLE_VALUE, "failed to create snapshot.");
+
+    PROCESSENTRY32 entry{};
+    entry.dwSize = sizeof(PROCESSENTRY32);
+            ASSERT(Process32First(hSnapshot, &entry) == TRUE, "failed to obtain first module");
+
+    DWORD pid{0};
+    do {
+        if (strcmp(entry.szExeFile, szProcessName) == 0) {
+            pid = entry.th32ProcessID;
+            break;
+        }
+    } while (Process32Next(hSnapshot, &entry) == TRUE);
+    CloseHandle(hSnapshot);
+
+    return pid;
+}
+
+static bool
+EnableTokenPrivilege(_In_ LPCTSTR Privilege) {
+    HANDLE Token;
+    TOKEN_PRIVILEGES TokenPrivileges;
+
+    Token = NULL;
+    RtlZeroMemory(&TokenPrivileges, sizeof(TOKEN_PRIVILEGES));
+
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &Token))
+        return false;
+
+    if (LookupPrivilegeValue(NULL, Privilege, &TokenPrivileges.Privileges[0].Luid)) {
+        TokenPrivileges.PrivilegeCount = 1;
+        TokenPrivileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+        return AdjustTokenPrivileges(Token, FALSE, &TokenPrivileges, 0, (PTOKEN_PRIVILEGES) NULL, 0);
+    }
+
+    return false;
+}
+
+DWORD WaitForProcessToBeCreated(const char *szProcessName) {
+    DWORD pid = GetProcessIdByName(szProcessName);
+
+    while (!pid) {
+        Sleep(5);
+        pid = GetProcessIdByName(szProcessName);
+
+        if (pid != 0)
+            Sleep(1000);
+
+        pid = GetProcessIdByName(szProcessName);
+    }
+
+    return pid;
+}
+
 int wmain(const int argc, const wchar_t **argv, const wchar_t **envp) {
-    auto pid = 9936;
-    auto winApiReader = std::make_shared<Dottik::Dumper::WinApi>(pid);
-    Dottik::Dumper::Dumper dumper{pid, winApiReader};
 
-    auto modules = dumper.GetAllRemoteProcessModules();
+    EnableTokenPrivilege(SE_DEBUG_NAME);
+    InitializeRenderGui();
 
-    dumper.DumpAllModules();
+    // auto winApiReader = std::make_shared<Dottik::Dumper::WinApi>(GetProcessIdByName("RobloxPlayerBeta.exe"));
+    // Dottik::Dumper::Dumper dumper{GetProcessIdByName("RobloxPlayerBeta.exe"), winApiReader};
+    // dumper.DumpAllModules();
+
     return 0;
 }

@@ -12,6 +12,7 @@
 #include "ProcessImage.hpp"
 #include "Readers/RemoteReader.hpp"
 #include "libassert/assert.hpp"
+#include "Dumper.hpp"
 #include <winternl.h>
 #include <Windows.h>
 
@@ -29,35 +30,17 @@ namespace Dottik::Dumper::PE {
     };
 
     class ImageDumper final {
+        Dottik::Dumper::Dumper *m_dumper;
         std::vector<std::byte> m_remoteImage;
         std::vector<SectionInformation> m_remoteImageSections;
         ProcessImage m_procImage;
         std::shared_ptr<Dottik::Dumper::RemoteReader> m_reader;
     public:
         [[maybe_unused]] explicit ImageDumper(const ProcessImage &image,
-                                              std::shared_ptr<Dottik::Dumper::RemoteReader> &reader) {
-            this->m_procImage = image;
-            this->m_reader = reader;
+                                              std::shared_ptr<Dottik::Dumper::RemoteReader> &reader,
+                                              Dottik::Dumper::Dumper *dumper);
 
-            this->m_remoteImage = {};
-            this->m_remoteImage.resize(
-                    image.dwModuleSize); // reserve memory to use .data() directly on other places (because it's easier to manage lmao)
-        }
-
-        void BuildInitialImage() {
-                    ASSUME(this->m_procImage.dwModuleSize > 0x1000,
-                           "dwModuleSize is under the sizeof(WindowsPage). What the hell happened?");
-
-            auto remoteBaseAddress = this->m_procImage.rlpModuleBase;
-
-            auto peHeader = this->m_reader->Read(remoteBaseAddress, 0x1000);
-
-                    ASSERT(peHeader.has_value(), "Failed to read memory from remote process. Wtf?");
-
-            const auto &mem = peHeader.value();
-
-            memcpy(this->m_remoteImage.data(), mem.data(), mem.size());
-        }
+        void BuildInitialImage();
 
 #define RVAToVA(x, y) (void *)((std::uintptr_t)(x) + y)
 #define AlignUp(x, align) (((x) + ((align)-1)) & ~((align)-1))
@@ -112,7 +95,13 @@ namespace Dottik::Dumper::PE {
 
                     auto memInfo = addressInformation.value();
                     if ((memInfo.Protect & PAGE_NOACCESS) == PAGE_NOACCESS) {
+                        // This section is encrypted! Pre-Fill with 0xCC!
                         hasEncryption = true;
+                        memset(reinterpret_cast<void *>(RVAToVA(baseAddress,
+                                                                sectionHeader->PointerToRawData)),
+                               0xCC,    // fill with breakpoints.
+                               sectionHeader->SizeOfRawData);
+                        break;
                     }
 
                     startAddress += memInfo.RegionSize;
@@ -141,56 +130,70 @@ namespace Dottik::Dumper::PE {
             return sections;
         }
 
-        void ResolveInitialSections() {
-            /*
-             *  As for the time being we only support Hyperion, Hyperion's page re-encryption works by tagging encrypted pages as NO_ACCESS.
-             *  This means that to value whether a page is encrypted we simply must sweep from beginning to end of a section in search of NO_ACCESS.
-             *  If the tag is not present, we can build it as an initial section, and it will not have to be decrypted by monitoring.
-             */
-
-            auto sectionInformation = this->GetOrGenerateSectionInformation();
-
-            std::vector<std::future<void>> futures{};
-
-            for (const auto &section: sectionInformation) {
-                if (section.bRequiresDecryption)
-                    continue;   // Skip sections which require decryption.
-
-                futures.push_back(std::async(std::launch::async, [this, &section]() {
-                    auto read = this->m_reader->Read(section.rpSectionBegin, section.dwSectionSize);
-
-                            ASSERT(read.has_value() == true, "Failed to read section from remote process memory");
-
-                    memcpy(section.pSectionBegin, read.value().data(), section.dwSectionSize);
-                }));
-            }
-
-            while (!futures.empty()) {
-                for (auto start = futures.begin(); start != futures.end() && !futures.empty();) {
-                    if (start->wait_for(std::chrono::milliseconds{500}) == std::future_status::timeout) {
-                        ++start;
-                        continue;
-                    }
-
-                    start = futures.erase(start);
-                }
-            }
-
-        }
+        void ResolveInitialSections();
 
         std::vector<std::byte> GetRemoteImage() {
             return this->m_remoteImage; // TODO: Ensure that everything is complete before allowing the user to call this function???
         }
 
         void DecryptSection(const SectionInformation &section) {
-            std::unordered_set<std::uintptr_t> pageMap{};
+            std::vector<uint32_t> encryptedPages{};
+            auto pageCount = section.dwSectionSize / 0x1000;
+            auto pagesRequiredToDecrypt = round((float) pageCount * 1.0f);
+            encryptedPages.reserve(pageCount);
 
-            /*
-             *  Hyperion loves to touch pages. Thus we will iterate all the pages on the section and save them to the unordered_map.
-             *  This way we can quickly discern encrypted from decrypted pages.
-             */
+            for (auto pageIndex = 0; pageIndex < pageCount; pageIndex++)
+                encryptedPages.emplace_back(pageIndex);
 
-            auto localBufferSectionBegin = section.
+            auto timePassed = 0;
+            auto kys = false;
+            while ((pageCount - pagesRequiredToDecrypt) < encryptedPages.size() && !kys) {
+                Sleep(50);
+                timePassed += 50;
+                for (auto beginning = encryptedPages.begin(); beginning != encryptedPages.end();) {
+                    if (DWORD exitCode; GetExitCodeProcess(this->m_dumper->GetProcessHandle(), &exitCode) &&
+                                        exitCode != STILL_ACTIVE) {
+                        kys = true;
+                        break;
+                    }
+
+                    if (timePassed > 5000 && encryptedPages.size() <= pageCount * 0.125) {
+                        kys = true;
+                        break;
+                    }
+
+                    const auto currentPageRva = *beginning * 0x1000;   // 0x1000 == PAGE_SIZE
+
+                    const auto rpPageAddress = reinterpret_cast<void *>(RVAToVA(section.rpSectionBegin,
+                                                                                currentPageRva));
+                    const auto pLocalPageAddress = reinterpret_cast<void *>(RVAToVA(section.pSectionBegin,
+                                                                                    currentPageRva));
+
+                    auto info = this->m_reader->QueryAddressInformaton(rpPageAddress);
+
+                    if (!info.has_value()) {
+                        beginning++;
+                        continue;   // Process may have died or API failure.
+                    }
+
+                    auto memInfo = info.value();
+
+                    if (memInfo.Protect == PAGE_NOACCESS) {
+                        beginning++;
+                        continue;   // Encrypted
+                    }
+
+                    auto pageContent = this->m_reader->Read(rpPageAddress, 0x1000);
+
+                            ASSUME(pageContent.has_value() == true,
+                                   "Failed to read page. ReadProcessMemory (WinApi) failed?");
+
+                    memcpy(pLocalPageAddress, pageContent.value().data(), pageContent.value().size());
+
+                    beginning = encryptedPages.erase(beginning);
+                }
+            }
+
         }
 
         void ResolveEncryptedSections() {
@@ -215,7 +218,7 @@ namespace Dottik::Dumper::PE {
 
             while (!futures.empty()) {
                 for (auto start = futures.begin(); start != futures.end() && !futures.empty();) {
-                    if (start->wait_for(std::chrono::milliseconds{500}) == std::future_status::timeout) {
+                    if (start->wait_for(std::chrono::milliseconds{100}) == std::future_status::timeout) {
                         ++start;
                         continue;
                     }
@@ -223,6 +226,12 @@ namespace Dottik::Dumper::PE {
                     start = futures.erase(start);
                 }
             }
+        }
+
+        bool ContainsEncryptedSections() {
+            return std::ranges::any_of(this->GetOrGenerateSectionInformation(), [](const auto &obj) {
+                return obj.bRequiresDecryption;
+            });
         }
     };
 } // PE
