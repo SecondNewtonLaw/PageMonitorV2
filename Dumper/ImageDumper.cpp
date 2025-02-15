@@ -34,7 +34,7 @@ namespace Dottik::Dumper::PE {
 
     void ImageDumper::ResolveInitialSections() {
         /*
-         *  As for the time being we only support Hyperion, Hyperion's page re-encryption works by tagging encrypted pages as NO_ACCESS.
+         *  As for the time being we only support Hyperion, Hyperion's page re-encryption works by tagging encrypted pages as NO_ACCESS. (re-encryption? re-encrypting no_access pages? ur not ok)
          *  This means that to value whether a page is encrypted we simply must sweep from beginning to end of a section in search of NO_ACCESS.
          *  If the tag is not present, we can build it as an initial section, and it will not have to be decrypted by monitoring.
          */
