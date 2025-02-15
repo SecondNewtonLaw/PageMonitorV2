@@ -77,7 +77,7 @@ namespace Dottik::Graphics::Render {
         return true;
     }
 
-    void DX11::PrepareRender() {
+    [[maybe_unused]] void DX11::PrepareRender() {
         if (this->m_bDisposed) return;
         ImGui_ImplWin32_NewFrame();
         ImGui_ImplDX11_NewFrame();
@@ -101,7 +101,7 @@ namespace Dottik::Graphics::Render {
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
         // ~ Present information
-        const HRESULT presentResult = this->m_pSwapchain->Present(RenderManager::GetSingleton()->UseVSync() ? 1 : 0, 0);
+        const HRESULT presentResult = this->m_pSwapchain->Present(this->IsVsyncEnabled() ? 1 : 0, 0);
 
         this->m_bIsSwapchainOccluded = presentResult == DXGI_STATUS_OCCLUDED;
 
@@ -195,6 +195,14 @@ namespace Dottik::Graphics::Render {
         }
 
         this->m_bDisposed = true;
+    }
+
+    bool DX11::IsVsyncEnabled() {
+        return this->m_bEnableVsync;
+    }
+
+    void DX11::UseVsync(bool newVsync) {
+        this->m_bEnableVsync = newVsync;
     }
 } // Graphics
 // PageMonitorV2

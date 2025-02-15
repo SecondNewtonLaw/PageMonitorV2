@@ -5,6 +5,7 @@
 #include "RenderManager.hpp"
 
 #include "backends/imgui_impl_win32.h"
+#include <libassert/assert.hpp>
 
 
 namespace Dottik::Graphics::Render {
@@ -43,13 +44,8 @@ namespace Dottik::Graphics::Render {
         return this->m_pRenderBackend->Render();
     }
 
-    bool RenderManager::UseVSync() const {
-        return false;
-    }
-
     void RenderManager::CleanUp() {
-        if (this->m_bIsDisposed)
-            return;
+                ASSERT(!this->m_bIsDisposed, "Object was disposed of already. Cannot be cleaned up again.");
 
         for (const auto &obj: this->m_renderList)
             delete obj;
@@ -73,17 +69,17 @@ namespace Dottik::Graphics::Render {
     }
 
     bool RenderManager::InitializeWithBackend(
-        const std::shared_ptr<Dottik::Graphics::Render::RenderBackend> &newRenderBackend, HWND hWnd,
-        WNDCLASSEXW &hWndClass) {
+            const std::shared_ptr<Dottik::Graphics::Render::RenderBackend> &newRenderBackend, HWND hWnd,
+            WNDCLASSEXW &hWndClass) {
         if (this->IsInitialized())
             return false;
+
+                DEBUG_ASSERT(IMGUI_CHECKVERSION());
 
         this->m_hWnd = hWnd;
         this->m_pRenderBackend = newRenderBackend;
         this->m_hWndClass = hWndClass;
-#if _DEBUG
-        IMGUI_CHECKVERSION();
-#endif
+
         ImGui::CreateContext();
 
         ImGui::StyleColorsDark();
@@ -96,8 +92,8 @@ namespace Dottik::Graphics::Render {
 
     bool RenderManager::IsInitialized() {
         return this->m_pRenderBackend != nullptr && (
-                   static_cast<std::uint8_t>(this->m_pRenderBackend->IsInitialized()) & static_cast<std::uint8_t>(this->
-                       m_bIsInitialized));
+                static_cast<std::uint8_t>(this->m_pRenderBackend->IsInitialized()) & static_cast<std::uint8_t>(this->
+                        m_bIsInitialized));
     }
 
     bool RenderManager::Initialize() {

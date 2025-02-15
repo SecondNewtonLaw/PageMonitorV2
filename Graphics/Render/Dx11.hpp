@@ -3,6 +3,7 @@
 //
 
 #pragma once
+
 #include <d3d11.h>
 
 #include "RenderBackend.hpp"
@@ -11,6 +12,8 @@
 namespace Dottik::Graphics::Render {
     class DX11 final : public Dottik::Graphics::Render::RenderBackend {
         HWND m_hWindow;
+
+        bool m_bEnableVsync;
 
         // DX11 Specfific.
         IDXGISwapChain *m_pSwapchain;
@@ -25,24 +28,29 @@ namespace Dottik::Graphics::Render {
         void CreateRenderTarget();
 
     public:
-        explicit DX11(HWND hWnd); ;
+        explicit DX11(HWND hWnd);;
 
         ~DX11() override;
 
-        bool IsInitialized() override;
+        [[maybe_unused]] void UseVsync(bool newVsync) override;
+
+        [[maybe_unused]] bool IsVsyncEnabled() override;
+
+        [[maybe_unused]] bool IsInitialized() override;
 
         bool Initialize() override;
 
-        void PrepareRender() override;
+        [[maybe_unused]] void PrepareRender() override;
 
         RenderStatus Render() override;
 
         bool CanRender() override;
 
-        Dottik::Graphics::Render::Backend GetBackendIdentifier() override;
+        [[maybe_unused]] Dottik::Graphics::Render::Backend GetBackendIdentifier() override;
 
-        void ResizeBuffers(UINT dwWidth, UINT dwHeight) override;
+        [[maybe_unused]] void ResizeBuffers(UINT dwWidth, UINT dwHeight) override;
 
         void CleanUp() override;
+
     };
 } // PageMonitor::Graphics

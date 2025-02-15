@@ -30,8 +30,6 @@ namespace Dottik::Graphics::Render {
 
         RenderStatus Render();
 
-        bool UseVSync() const;
-
         void CleanUp();
 
         void AddToRenderList(Renderable *renderable);

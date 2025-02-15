@@ -34,6 +34,14 @@ namespace Dottik::Graphics::Render {
             return RenderStatus::NotRendering; // Implement your own when overriding.
         }
 
+        virtual void UseVsync(bool newVsync) {
+
+        }
+
+        virtual bool IsVsyncEnabled() {
+            return false;
+        }
+
         virtual bool CanRender() {
             return false;
         }
