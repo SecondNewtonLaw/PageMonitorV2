@@ -6,6 +6,8 @@
 
 #include <cstddef>
 #include <optional>
+#include <Windows.h>
+
 
 namespace Dottik::Dumper {
     class RemoteReader {
@@ -23,6 +25,10 @@ namespace Dottik::Dumper {
 
         virtual std::optional<std::vector<std::byte>> ReadAligned(void *rpAddress, std::size_t memSize) {
             throw std::exception{"RemoteReader::ReadAligned: Not Implemented"};
+        }
+
+        virtual std::optional<MEMORY_BASIC_INFORMATION> QueryAddressInformaton(void *rpAddress) {
+            throw std::exception{"RemoteReader::QueryAddressInformation: Not Implemented"};
         }
     };
 } // Dumper

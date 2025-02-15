@@ -21,6 +21,14 @@ namespace Dottik::Dumper {
         std::optional<std::vector<std::byte>> Read(void *rpAddress, std::size_t memSize) override;
 
         std::optional<std::vector<std::byte>> ReadAligned(void *rpAddress, std::size_t memSize) override;
+
+        std::optional<MEMORY_BASIC_INFORMATION> QueryAddressInformaton(void *rpAddress) override {
+            MEMORY_BASIC_INFORMATION basicInfo{};
+            if (!VirtualQueryEx(this->m_hProcess, rpAddress, &basicInfo, sizeof(MEMORY_BASIC_INFORMATION)))
+                return std::nullopt;
+
+            return basicInfo;
+        }
     };
 } // Dumper
 // Dottik

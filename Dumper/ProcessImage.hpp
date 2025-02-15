@@ -16,6 +16,10 @@ struct ProcessImage {
     HMODULE rhModule;
     void *rlpModuleBase;
 
+    ProcessImage() {
+
+    }
+
     ProcessImage(wchar_t *wszModuleName, wchar_t *wszModulePath, std::uint32_t dwOwnerProcessId,
                  std::uint32_t dwModuleSizeFromBaseAddress, HMODULE rhModule, void *rlpModuleBaseAddress) {
         this->wszModuleName = wszModuleName;

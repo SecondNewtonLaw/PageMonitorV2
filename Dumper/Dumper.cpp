@@ -6,7 +6,6 @@
 #include <TlHelp32.h>
 #include <filesystem>
 #include <future>
-#include <future>
 #include <libassert/assert.hpp>
 #include <fstream>
 #include <map>
@@ -45,12 +44,18 @@ namespace Dottik::Dumper {
 
         for (const auto &module: modules) {
             futures.push_back(std::async(std::launch::async, [this, &module]() {
-                auto initialImage = Dottik::Dumper::PE::ImageDumper::BuildInitialImage(module, this->m_reader);
+                auto imageDumper = Dottik::Dumper::PE::ImageDumper(module, this->m_reader);
+
+                imageDumper.BuildInitialImage();
+
+                imageDumper.ResolveInitialSections();
+
+                imageDumper.ResolveEncryptedSections();
 
                 // TODO: Implement Import resolution
-                // TODO: Implement section resolution.
+                // TODO: Implement section resolution [Unencrypted is done!].
 
-                return std::pair{module, initialImage};
+                return std::pair{module, imageDumper.GetRemoteImage()};
             }));
         }
 
