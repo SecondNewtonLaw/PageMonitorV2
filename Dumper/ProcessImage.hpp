@@ -5,7 +5,8 @@
 #pragma once
 
 #include <string>
-
+#include <cstdint>
+#include <Windows.h>
 
 struct ProcessImage {
     std::wstring wszModuleName;

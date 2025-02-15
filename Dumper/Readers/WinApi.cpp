@@ -3,6 +3,7 @@
 //
 
 #include "WinApi.hpp"
+#include <vector>
 
 
 namespace Dottik::Dumper {
@@ -12,21 +13,21 @@ namespace Dottik::Dumper {
                                        dwProcessId);
     }
 
-    std::optional<std::byte *> WinApi::Read(void *rpAddress, const std::size_t memSize) {
-        auto *tmpBuffer = new std::byte[memSize];
+    std::optional<std::vector<std::byte>> WinApi::Read(void *rpAddress, const std::size_t memSize) {
+        auto tmpBuffer = std::vector<std::byte>{};
+        tmpBuffer.resize(memSize);
         auto readBytes = 0ull;
-        if (!ReadProcessMemory(this->m_hProcess, rpAddress, tmpBuffer, memSize, &readBytes)) {
-            delete[] tmpBuffer;
+        if (!ReadProcessMemory(this->m_hProcess, rpAddress, tmpBuffer.data(), memSize, &readBytes)) {
             return std::nullopt;
         }
 
         return tmpBuffer;
     }
 
-    std::optional<std::byte *> WinApi::ReadAligned(void *rpAddress, const std::size_t memSize) {
+    std::optional<std::vector<std::byte>> WinApi::ReadAligned(void *rpAddress, const std::size_t memSize) {
         return Read(
-            reinterpret_cast<void *>(RemoteReader::AlignAddress(reinterpret_cast<std::uintptr_t>(rpAddress))),
-            memSize);
+                reinterpret_cast<void *>(RemoteReader::AlignAddress(reinterpret_cast<std::uintptr_t>(rpAddress))),
+                memSize);
     }
 } // Dumper
 // Dottik

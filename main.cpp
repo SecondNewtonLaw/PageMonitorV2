@@ -9,6 +9,8 @@
 #include "Graphics/Render/Dx11.hpp"
 #include "Graphics/Render/RenderManager.hpp"
 #include "Graphics/UserInterface/UserInterface.hpp"
+#include "Dumper/Dumper.hpp"
+#include "Dumper/Readers/WinApi.hpp"
 
 #include <libassert/assert.hpp>
 #include <memory>
@@ -67,10 +69,10 @@ void RenderLoop(const bool &bRenderNext, std::shared_ptr<Dottik::Graphics::Rende
     renderManager->CleanUp();
 }
 
-int wmain(const int argc, const wchar_t **argv, const wchar_t **envp) {
+void InitializeRenderGui() {
     WNDCLASSEXW wndClass = {
-        sizeof(wndClass), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr,
-        L"DottikWnd", nullptr
+            sizeof(wndClass), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr,
+            L"DottikWnd", nullptr
     };
 
     ::RegisterClassExW(&wndClass);
@@ -110,6 +112,15 @@ int wmain(const int argc, const wchar_t **argv, const wchar_t **envp) {
             }
         }
     }
+}
 
+int wmain(const int argc, const wchar_t **argv, const wchar_t **envp) {
+    auto pid = 9936;
+    auto winApiReader = std::make_shared<Dottik::Dumper::WinApi>(pid);
+    Dottik::Dumper::Dumper dumper{pid, winApiReader};
+
+    auto modules = dumper.GetAllRemoteProcessModules();
+
+    dumper.DumpAllModules();
     return 0;
 }

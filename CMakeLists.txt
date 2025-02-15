@@ -73,6 +73,8 @@ add_executable(${PROJECT_NAME}
         Dumper/Readers/WinApi.cpp
         Dumper/Readers/WinApi.hpp
         Dumper/ProcessImage.hpp
+        Dumper/ImageDumper.cpp
+        Dumper/ImageDumper.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})

@@ -7,6 +7,7 @@
 #include <memory>
 #include "Readers/RemoteReader.hpp"
 #include "ProcessImage.hpp"
+#include <map>
 
 namespace Dottik::Dumper {
     class Dumper final {
@@ -14,8 +15,10 @@ namespace Dottik::Dumper {
         std::int32_t m_dwProcessId;
 
     public:
-        explicit Dumper(std::int32_t dwProcessId, std::shared_ptr<Dottik::Dumper::RemoteReader> & reader);
+        explicit Dumper(std::int32_t dwProcessId, std::shared_ptr<Dottik::Dumper::RemoteReader> reader);
 
         std::vector<ProcessImage> GetAllRemoteProcessModules();
+
+        std::vector<std::map<ProcessImage, std::byte>> DumpAllModules();
     };
 }
