@@ -2,12 +2,15 @@
 
 #include "AssemblyObfuscations.hpp"
 #include "Logger.hpp"
+#include "Global.hpp"
 #include "backends/imgui_impl_win32.h"
 #include "Protections/ObscuredValue.hpp"
 #include "Protections/ObscuredMethod/XorObscurable.hpp"
 #include "Graphics/Render/Dx11.hpp"
 #include "Graphics/Render/RenderManager.hpp"
 #include "Graphics/UserInterface/UserInterface.hpp"
+
+#include <libassert/assert.hpp>
 #include <memory>
 #include <thread>
 
@@ -47,8 +50,6 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 void RenderLoop(const bool &bRenderNext, std::shared_ptr<Dottik::Graphics::Render::RenderManager> renderManager) {
     while (bRenderNext) {
         if (0 != g_resizeTarget.x && 0 != g_resizeTarget.y) {
-            DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
-                      "Resizing buffers...");
             renderManager->ResizeRender(
                 static_cast<UINT>(g_resizeTarget.x), static_cast<UINT>(g_resizeTarget.y));
             g_resizeTarget = ImVec2{0.0f, 0.0f};
@@ -56,10 +57,7 @@ void RenderLoop(const bool &bRenderNext, std::shared_ptr<Dottik::Graphics::Rende
 
         if (renderManager->IsRenderingEnabled()) {
             renderManager->PrepareRender();
-            if (renderManager->Render() == Dottik::Graphics::Render::RenderStatus::Failure) {
-                DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
-                          "Failed to render successfully (Render Failure)");
-            }
+            ASSERT(renderManager->Render() == Dottik::Graphics::Render::RenderStatus::Success);
         } else {
             DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
                       "Window Occluded [X]");
