@@ -17,6 +17,9 @@ if (build_type STREQUAL release)
             /O2
             /Gr
             /GS
+            /GR-
+            /GF
+            /GL
             /cgthreads8
             /arch:AVX2
     )
@@ -66,10 +69,10 @@ add_executable(${PROJECT_NAME}
         Exceptions/RenderInitializationError.hpp
         Dumper/Dumper.cpp
         Dumper/Dumper.hpp
-        Dumper/Readers/RemoteReader.cpp
         Dumper/Readers/RemoteReader.hpp
         Dumper/Readers/WinApi.cpp
         Dumper/Readers/WinApi.hpp
+        Dumper/ProcessImage.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
@@ -77,6 +80,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/Dependen
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/Dependencies/Capstone)
 add_subdirectory(${PROJECT_SOURCE_DIR}/Dependencies/Imgui)
+add_subdirectory(${PROJECT_SOURCE_DIR}/Dependencies/libassert)
 
 target_link_libraries(${PROJECT_NAME}
         PUBLIC
@@ -84,4 +88,6 @@ target_link_libraries(${PROJECT_NAME}
         capstone::capstone
 
         Imgui
+
+        libassert::assert
 )
