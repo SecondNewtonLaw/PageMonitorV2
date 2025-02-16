@@ -17,6 +17,7 @@
 
 namespace Dottik::Graphics::Render::UI::Pages {
     class MainPage final : public Dottik::Graphics::Render::Renderable {
+        std::string m_szSectionBlacklist;
         std::string m_szTargetProcessName;
         std::string m_szLogOutput;
         bool m_bMonitorProcess;
@@ -25,6 +26,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
         bool m_bAllowPartialDump;
         bool m_bPatchIllegalInsturctions;
         bool m_bUseNewPatchingLogic;
+        bool m_bUseSectionBlacklist;
 
         std::unique_ptr<Dottik::Dumper::Dumper> m_pDumper;
 

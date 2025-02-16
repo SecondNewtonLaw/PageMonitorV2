@@ -43,7 +43,16 @@ namespace Dottik::Graphics::Render::UI::Pages {
         ImGui::EndDisabled();
         ImGui::EndDisabled();
 
+        ImGui::BeginDisabled(this->m_bCurrentlyDumpingProcess);
+
+        ImGui::Checkbox("Enable Section Blacklisting", &this->m_bUseSectionBlacklist);
+        ImGui::BulletText(
+            "If enabled, the list below will be parsed, separating segment names by ',' and blacklisting them. By blacklisting them, all their content will be replaced with '0xCC', also known as an INT3 (debug breakpoint/__debugbreak). All the section names must be prefixed with ., as they're part of the way the sections are named themselves.");
+        ImGui::EndDisabled();
+        ImGui::BeginDisabled(this->m_bCurrentlyDumpingProcess || !this->m_bUseSectionBlacklist);
+        ImGui::CxxInputText("##SectionBlacklisting", &this->m_szSectionBlacklist);
         Renderable::PushSeparator();
+        ImGui::EndDisabled();
 
         ImGui::BeginDisabled(
             !this->IsTargetProcessAlive() || this->m_bMonitorProcess || this->m_bCurrentlyDumpingProcess);
@@ -64,6 +73,8 @@ namespace Dottik::Graphics::Render::UI::Pages {
                 this->DumpTarget();
             }).detach();
         }
+
+        ImGui::SameLine();
 
         ImGui::PopStyleColor();
         ImGui::EndDisabled();
@@ -127,6 +138,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
             m_pDumper = std::make_unique<Dottik::Dumper::Dumper>(dwProcessId.value(), winApiReader);
         }
 
+        m_pDumper->WithSectionBlacklisting(this->m_bUseSectionBlacklist, this->m_szSectionBlacklist);
         m_pDumper->WithNewPatchingLogic(this->m_bUseNewPatchingLogic);
 
         if (this->m_bDumpAllImages) {
@@ -147,16 +159,22 @@ namespace Dottik::Graphics::Render::UI::Pages {
                           this->m_szTargetProcessName));
         }
 
+        DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
+                  std::format("Process monitoring has been disabled, as the tracked dump has finalized!"));
+        this->m_bMonitorProcess = false;
         this->m_bCurrentlyDumpingProcess = false;
     }
 
     MainPage::MainPage() {
         this->m_szTargetProcessName = "";
         this->m_szLogOutput = "";
-        this->m_bAllowPartialDump = false;
         this->m_bMonitorProcess = false;
         this->m_bDumpAllImages = false;
         this->m_bCurrentlyDumpingProcess = false;
+        this->m_bAllowPartialDump = false;
+        this->m_bPatchIllegalInsturctions = false;
+        this->m_bUseNewPatchingLogic = false;
+        this->m_bUseSectionBlacklist = false;
         this->m_pDumper = nullptr;
     }
 } // namespace RbxStu::Render::UI::Pages

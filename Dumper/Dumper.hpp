@@ -25,6 +25,8 @@ namespace Dottik::Dumper {
         bool m_bUsable;
         bool m_bPatchDump;
         bool m_bUseNewPatchingLogic;
+        bool m_bUseSectionBlacklist;
+        std::vector<std::string> m_blacklistedSections;
 
     public:
         Dumper();
@@ -35,6 +37,8 @@ namespace Dottik::Dumper {
                                              const std::shared_ptr<Dottik::Dumper::WinApi> &reader);
 
         void WithNewPatchingLogic(bool useNewPatchingLogic);
+
+        void WithSectionBlacklisting(bool useSectionBlacklist, const std::string &blacklistedSections);
 
         explicit Dumper(std::uint32_t dwProcessId, const std::shared_ptr<Dottik::Dumper::WinApi> &reader);
 

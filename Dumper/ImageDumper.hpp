@@ -39,6 +39,7 @@ namespace Dottik::Dumper::PE {
         ProcessImage m_procImage;
         std::shared_ptr<Dottik::Dumper::RemoteReader> m_reader;
         bool m_bHasProcessImageMigrated;
+        std::vector<std::string> m_sectionBlacklist;
 
     public:
         [[maybe_unused]] explicit ImageDumper(const ProcessImage &image,
@@ -50,6 +51,8 @@ namespace Dottik::Dumper::PE {
         void MigrateReader(const std::shared_ptr<Dottik::Dumper::RemoteReader> &reader);
 
         [[nodiscard]] ProcessImage GetProcessImage() const;
+
+        void WithSectionBlacklist(const std::vector<std::string> &blacklistedSections);
 
         void NewPatchSection(csh csh, const SectionInformation & value);
 

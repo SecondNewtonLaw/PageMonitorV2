@@ -14,6 +14,7 @@
 #include "Dumper.hpp"
 #include "ImageDumper.hpp"
 #include "Logger.hpp"
+#include "Utilities.hpp"
 
 namespace Dottik::Dumper {
     Dumper::Dumper(const std::uint32_t dwProcessId, const std::shared_ptr<Dottik::Dumper::WinApi> &reader) {
@@ -69,6 +70,9 @@ namespace Dottik::Dumper {
             }
 
             if (dumper != nullptr) {
+                // The section blacklist should already be OK.
+                if (this->m_bUseSectionBlacklist)
+                    dumper->WithSectionBlacklist(this->m_blacklistedSections);
                 dumper->MigrateImage(module);
                 dumper->MigrateReader(this->m_reader);
                 dumper->GetOrGenerateSectionInformation();
@@ -88,6 +92,9 @@ namespace Dottik::Dumper {
             }
 
             auto imageDumper = std::make_shared<Dottik::Dumper::PE::ImageDumper>(module, this->m_reader, this);
+            if (this->m_bUseSectionBlacklist)
+                imageDumper->WithSectionBlacklist(this->m_blacklistedSections);
+
             imageDumper->BuildInitialImage();
 
             imageDumper->ResolveInitialSections();
@@ -155,18 +162,13 @@ namespace Dottik::Dumper {
         }
 
         if (dumper != nullptr) {
-            DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
-                      "Translating old remote pointers...")
+            // Blacklist should already be set.
+            if (this->m_bUseSectionBlacklist)
+                dumper->WithSectionBlacklist(this->m_blacklistedSections);
             dumper->MigrateImage(processImage);
-            DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
-                      "Migrating remote reader...")
             dumper->MigrateReader(this->m_reader);
-            DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
-                      "Updating section metadata...")
             dumper->GetOrGenerateSectionInformation();
             if (const auto hasEncryptedSections = dumper->ContainsEncryptedSections(); hasEncryptedSections) {
-                DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
-                          "Continuing resolving encrypted pages...")
                 dumper->ResolveEncryptedSections();
 
                 if (this->m_bPatchDump)
@@ -191,6 +193,8 @@ namespace Dottik::Dumper {
         }
 
         dumper = std::make_shared<Dottik::Dumper::PE::ImageDumper>(processImage, this->m_reader, this);
+        if (this->m_bUseSectionBlacklist)
+            dumper->WithSectionBlacklist(this->m_blacklistedSections);
         dumper->BuildInitialImage();
 
         dumper->ResolveInitialSections();
@@ -256,6 +260,11 @@ namespace Dottik::Dumper {
 
     void Dumper::WithNewPatchingLogic(bool useNewPatchingLogic) {
         this->m_bUseNewPatchingLogic = useNewPatchingLogic;
+    }
+
+    void Dumper::WithSectionBlacklisting(bool useSectionBlacklist, const std::string &blacklistedSections) {
+        this->m_bUseSectionBlacklist = useSectionBlacklist;
+        this->m_blacklistedSections = Utilities::Split(blacklistedSections, ",");
     }
 } // Dumper
 // Dottik

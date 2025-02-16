@@ -16,6 +16,7 @@ namespace Dottik::Dumper::PE {
         this->m_reader = reader;
         this->m_dumper = dumper;
 
+        this->m_sectionBlacklist = {};
         this->m_remoteImage = std::make_shared<std::vector<std::byte> >();
         this->m_remoteImage->resize(
             image.dwModuleSize);
@@ -34,6 +35,10 @@ namespace Dottik::Dumper::PE {
 
     ProcessImage ImageDumper::GetProcessImage() const {
         return this->m_procImage;
+    }
+
+    void ImageDumper::WithSectionBlacklist(const std::vector<std::string> &blacklistedSections) {
+        this->m_sectionBlacklist = blacklistedSections;
     }
 
     void ImageDumper::NewPatchSection(csh csh, const SectionInformation &section) {
@@ -408,7 +413,8 @@ namespace Dottik::Dumper::PE {
 
     std::vector<SectionInformation> GenerateInitialSectionInformation(
         const std::shared_ptr<std::vector<std::byte> > &remoteImage,
-        const std::shared_ptr<Dottik::Dumper::RemoteReader> &reader
+        const std::shared_ptr<Dottik::Dumper::RemoteReader> &reader,
+        const std::vector<std::string> &blacklistedSections
     ) {
         const auto baseAddress = reinterpret_cast<std::uintptr_t>(remoteImage->data());
         const auto imageBase = reinterpret_cast<PIMAGE_DOS_HEADER>(baseAddress);
@@ -421,6 +427,14 @@ namespace Dottik::Dumper::PE {
         sections.reserve(ntHeaders->FileHeader.NumberOfSections);
 
         for (auto i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++, sectionHeader++) {
+            auto skipSection = false;
+            for (const auto &blacklistedSection: blacklistedSections) {
+                if (strcmp(blacklistedSection.c_str(), reinterpret_cast<char *>(sectionHeader->Name)) == 0) {
+                    skipSection = true;
+                    break;
+                }
+            }
+
             sectionHeader->Misc.VirtualSize = AlignUp(sectionHeader->Misc.VirtualSize,
                                                       ntHeaders->OptionalHeader.SectionAlignment);
 
@@ -473,6 +487,13 @@ namespace Dottik::Dumper::PE {
                     decryptionList.emplace_back(pageIndex);
             }
 
+            if (skipSection) {
+                memset(RVAToVA(baseAddress,
+                               sectionHeader->PointerToRawData),
+                       0xCC,
+                       sectionHeader->SizeOfRawData);
+                continue;
+            }
 
             DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
                       std::format("Cached new section: {}. Section Size: {}. Section Pages: {}. IsEncrypted: {}",
@@ -513,7 +534,8 @@ namespace Dottik::Dumper::PE {
              *  This is not that complicated, it's just a bunch of garbage VA translation shit.
              */
 
-            this->m_remoteImageSections = GenerateInitialSectionInformation(this->m_remoteImage, this->m_reader);
+            this->m_remoteImageSections = GenerateInitialSectionInformation(
+                this->m_remoteImage, this->m_reader, this->m_sectionBlacklist);
 
             return this->m_remoteImageSections;
         }
@@ -538,6 +560,18 @@ namespace Dottik::Dumper::PE {
          */
 
         for (auto &section: this->m_remoteImageSections) {
+            auto skipSection = false;
+            for (const auto &blacklistedSection: this->m_sectionBlacklist) {
+                if (strcmp(blacklistedSection.c_str(), reinterpret_cast<char *>(sectionHeader->Name)) == 0) {
+                    skipSection = true;
+                    break;
+                }
+            }
+            if (skipSection) {
+                sectionHeader++;
+                continue;
+            }
+
             // NOTE: this->m_remoteImageSections is in order with the section headers; this means the first in the vector is the first in the actual section definitions.
             const auto sectionBaseAddress = reinterpret_cast<void *>(RVAToVA(optionalHeaders->ImageBase,
                                                                              sectionHeader->VirtualAddress));
