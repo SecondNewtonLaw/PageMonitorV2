@@ -3591,7 +3591,7 @@ static const ImGuiLocEntry GLocalizationEntriesEnUS[] =
     { ImGuiLocKey_TableSizeAllFit,      "Size all columns to fit###SizeAll"     },
     { ImGuiLocKey_TableSizeAllDefault,  "Size all columns to default###SizeAll" },
     { ImGuiLocKey_TableResetOrder,      "Reset order###ResetOrder"              },
-    { ImGuiLocKey_WindowingMainMenuBar, "(Main menu bar)"                       },
+    { ImGuiLocKey_WindowingMainMenuBar, "(MainPage menu bar)"                       },
     { ImGuiLocKey_WindowingPopup,       "(Popup)"                               },
     { ImGuiLocKey_WindowingUntitled,    "(Untitled)"                            },
 };
@@ -14304,7 +14304,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
             Indent();
             Text("WheelingWindow: '%s'", g.WheelingWindow ? g.WheelingWindow->Name : "NULL");
             Text("WheelingWindowReleaseTimer: %.2f", g.WheelingWindowReleaseTimer);
-            Text("WheelingAxisAvg[] = { %.3f, %.3f }, Main Axis: %s", g.WheelingAxisAvg.x, g.WheelingAxisAvg.y, (g.WheelingAxisAvg.x > g.WheelingAxisAvg.y) ? "X" : (g.WheelingAxisAvg.x < g.WheelingAxisAvg.y) ? "Y" : "<none>");
+            Text("WheelingAxisAvg[] = { %.3f, %.3f }, MainPage Axis: %s", g.WheelingAxisAvg.x, g.WheelingAxisAvg.y, (g.WheelingAxisAvg.x > g.WheelingAxisAvg.y) ? "X" : (g.WheelingAxisAvg.x < g.WheelingAxisAvg.y) ? "Y" : "<none>");
             Unindent();
         }
 
@@ -14743,7 +14743,7 @@ void ImGui::DebugNodeViewport(ImGuiViewportP* viewport)
     if (TreeNode("viewport0", "Viewport #%d", 0))
     {
         ImGuiWindowFlags flags = viewport->Flags;
-        BulletText("Main Pos: (%.0f,%.0f), Size: (%.0f,%.0f)\nWorkArea Offset Left: %.0f Top: %.0f, Right: %.0f, Bottom: %.0f",
+        BulletText("MainPage Pos: (%.0f,%.0f), Size: (%.0f,%.0f)\nWorkArea Offset Left: %.0f Top: %.0f, Right: %.0f, Bottom: %.0f",
             viewport->Pos.x, viewport->Pos.y, viewport->Size.x, viewport->Size.y,
             viewport->WorkOffsetMin.x, viewport->WorkOffsetMin.y, viewport->WorkOffsetMax.x, viewport->WorkOffsetMax.y);
         BulletText("Flags: 0x%04X =%s%s%s", viewport->Flags,

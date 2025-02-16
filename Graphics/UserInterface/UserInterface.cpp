@@ -9,7 +9,7 @@
 #include <mutex>
 
 #include "Pages/CreditsPage.hpp"
-#include "Pages/SettingsPage.hpp"
+#include "Pages/MainPage.hpp"
 #include "Graphics/ImmediateGui/Keycodes.hpp"
 #include "Graphics/ImmediateGui/PagedWindow.hpp"
 #include "Graphics/RenderableStub.hpp"
@@ -23,7 +23,7 @@ namespace Dottik::Graphics::Render {
             return false;
 
         const auto pages = std::vector<UI::UIPage>{
-            UI::UIPage{std::make_shared<Dottik::Graphics::Render::UI::Pages::SettingsPage>(), "Settings"},
+            UI::UIPage{std::make_shared<Dottik::Graphics::Render::UI::Pages::MainPage>(), "Settings"},
             UI::UIPage{std::make_shared<Dottik::Graphics::Render::UI::Pages::CreditsPage>(), "Credits"},
         };
 

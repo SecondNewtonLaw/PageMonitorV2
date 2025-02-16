@@ -58,8 +58,8 @@ add_executable(${PROJECT_NAME}
         Graphics/UserInterface/UserInterface.hpp
         Graphics/UserInterface/Pages/CreditsPage.cpp
         Graphics/UserInterface/Pages/CreditsPage.hpp
-        Graphics/UserInterface/Pages/SettingsPage.cpp
-        Graphics/UserInterface/Pages/SettingsPage.hpp
+        Graphics/UserInterface/Pages/MainPage.cpp
+        Graphics/UserInterface/Pages/MainPage.hpp
 
         Graphics/Color4.hpp
         Graphics/Renderable.cpp
@@ -75,6 +75,10 @@ add_executable(${PROJECT_NAME}
         Dumper/ProcessImage.hpp
         Dumper/ImageDumper.cpp
         Dumper/ImageDumper.hpp
+        Win32/Process.cpp
+        Win32/Process.hpp
+        Utilities.cpp
+        Utilities.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})

@@ -4,11 +4,12 @@
 
 #include "WinApi.hpp"
 #include <vector>
-
+#include <format>
+#include "../../../Logger.hpp"
 
 namespace Dottik::Dumper {
     WinApi::WinApi(const DWORD dwProcessId) {
-        this->m_hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_VM_OPERATION | PROCESS_QUERY_LIMITED_INFORMATION,
+        this->m_hProcess = OpenProcess(PROCESS_ALL_ACCESS,
                                        false,
                                        dwProcessId);
     }
@@ -18,6 +19,10 @@ namespace Dottik::Dumper {
         tmpBuffer.resize(memSize);
         auto readBytes = 0ull;
         if (!ReadProcessMemory(this->m_hProcess, rpAddress, tmpBuffer.data(), memSize, &readBytes)) {
+            auto dwError = GetLastError();
+            DottikLog(Dottik::LogType::Debug, Dottik::WinAPI,
+                      std::format("failed to ReadProcessMemory from a remote process -> Last Error: {}",
+                                  reinterpret_cast<void *>(dwError)));
             return std::nullopt;
         }
 

@@ -1356,7 +1356,7 @@ Other Changes:
   configuration flag. This is part of an effort to generalize the use of keyboard inputs. (#4023, #787).
   Note that while this is active you can also moving windows (with arrow) and resize (shift+arrows).
 - Nav: tabbing now cycles through clipped items and scroll accordingly. (#4449)
-- Nav: pressing PageUp/PageDown/Home/End when in Menu layer automatically moves back to Main layer.
+- Nav: pressing PageUp/PageDown/Home/End when in Menu layer automatically moves back to MainPage layer.
 - Nav: fixed resizing window from borders setting navigation to Menu layer.
 - Nav: prevent child from clipping items when using _NavFlattened and parent has a pending request.
 - Nav: pressing Esc to exit a child window reactivates the Nav highlight if it was disabled by mouse.

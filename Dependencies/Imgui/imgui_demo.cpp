@@ -367,7 +367,7 @@ void ImGui::ShowDemoWindow(bool* p_open)
         if (ImGui::BeginMenu("Examples"))
         {
             IMGUI_DEMO_MARKER("Menu/Examples");
-            ImGui::MenuItem("Main menu bar", NULL, &show_app_main_menu_bar);
+            ImGui::MenuItem("MainPage menu bar", NULL, &show_app_main_menu_bar);
 
             ImGui::SeparatorText("Mini apps");
             ImGui::MenuItem("Console", NULL, &show_app_console);
@@ -6521,7 +6521,7 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
     {
         if (ImGui::BeginTabItem("Sizes"))
         {
-            ImGui::SeparatorText("Main");
+            ImGui::SeparatorText("MainPage");
             ImGui::SliderFloat2("WindowPadding", (float*)&style.WindowPadding, 0.0f, 20.0f, "%.0f");
             ImGui::SliderFloat2("FramePadding", (float*)&style.FramePadding, 0.0f, 20.0f, "%.0f");
             ImGui::SliderFloat2("ItemSpacing", (float*)&style.ItemSpacing, 0.0f, 20.0f, "%.0f");
@@ -7837,7 +7837,7 @@ static void ShowExampleAppFullscreen(bool* p_open)
     {
         ImGui::Checkbox("Use work area instead of main area", &use_work_area);
         ImGui::SameLine();
-        HelpMarker("Main Area = entire viewport,\nWork Area = entire viewport minus sections used by the main menu bars, task bars etc.\n\nEnable the main-menu bar in Examples menu to see the difference.");
+        HelpMarker("MainPage Area = entire viewport,\nWork Area = entire viewport minus sections used by the main menu bars, task bars etc.\n\nEnable the main-menu bar in Examples menu to see the difference.");
 
         ImGui::CheckboxFlags("ImGuiWindowFlags_NoBackground", &flags, ImGuiWindowFlags_NoBackground);
         ImGui::CheckboxFlags("ImGuiWindowFlags_NoDecoration", &flags, ImGuiWindowFlags_NoDecoration);

@@ -9,7 +9,9 @@
 #include <utility>
 
 namespace Dottik {
-    enum LogType { Information, Warning, Error, Debug };
+    enum LogType {
+        Information, Warning, Error, Debug
+    };
 
     class Logger final {
         /// @brief Private, Static shared pointer into the instance.
@@ -23,6 +25,7 @@ namespace Dottik {
         std::uint32_t m_dwBufferSize;
         /// @brief The buffer used to store messages.
         std::string m_szMessageBuffer;
+        std::string m_szHistoryLog;
 
         /// @brief Flushes the buffer into the standard output.
         void Flush(Dottik::LogType messageType);
@@ -59,13 +62,20 @@ namespace Dottik {
         /// @param msg The content to write into the buffer, as an error.
         /// @param line
         void PrintError(std::string_view sectionName, std::string_view msg, std::string_view line);
-    };
 
+        std::string &GetHistoryLog();
+
+        bool IsNewLogAvailable();
+
+        void MarkRead();
+    };
 
     /// @brief Defines a section for use in the logger
 #define DefineSectionName(varName, sectionName) constexpr auto varName = sectionName
     DefineSectionName(Rendering, "Dottik::D3D11");
     DefineSectionName(MainThread, "Dottik::MainThread");
+    DefineSectionName(WinAPI, "Dottik::WinAPI");
+    DefineSectionName(DumpingEngine, "Dottik::DumpingEngine");
 #undef DefineSectionName
 }; // namespace RbxStu
 

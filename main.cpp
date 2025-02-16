@@ -115,26 +115,6 @@ void InitializeRenderGui() {
     }
 }
 
-DWORD GetProcessIdByName(const char *szProcessName) {
-    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-
-            ASSERT(hSnapshot != nullptr && hSnapshot != INVALID_HANDLE_VALUE, "failed to create snapshot.");
-
-    PROCESSENTRY32 entry{};
-    entry.dwSize = sizeof(PROCESSENTRY32);
-            ASSERT(Process32First(hSnapshot, &entry) == TRUE, "failed to obtain first module");
-
-    DWORD pid{0};
-    do {
-        if (strcmp(entry.szExeFile, szProcessName) == 0) {
-            pid = entry.th32ProcessID;
-            break;
-        }
-    } while (Process32Next(hSnapshot, &entry) == TRUE);
-    CloseHandle(hSnapshot);
-
-    return pid;
-}
 
 static bool
 EnableTokenPrivilege(_In_ LPCTSTR Privilege) {
@@ -157,21 +137,7 @@ EnableTokenPrivilege(_In_ LPCTSTR Privilege) {
     return false;
 }
 
-DWORD WaitForProcessToBeCreated(const char *szProcessName) {
-    DWORD pid = GetProcessIdByName(szProcessName);
 
-    while (!pid) {
-        Sleep(5);
-        pid = GetProcessIdByName(szProcessName);
-
-        if (pid != 0)
-            Sleep(1000);
-
-        pid = GetProcessIdByName(szProcessName);
-    }
-
-    return pid;
-}
 
 int wmain(const int argc, const wchar_t **argv, const wchar_t **envp) {
 

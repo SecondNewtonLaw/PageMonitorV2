@@ -36,13 +36,15 @@ void Dottik::Logger::Flush(const Dottik::LogType messageType) {
             std::cout << termcolor::bright_white << this->m_szMessageBuffer << termcolor::reset << std::endl;
             break;
     }
+
+    this->m_szHistoryLog += this->m_szMessageBuffer + "\r\n";
     this->m_szMessageBuffer.clear();
 }
 
 void Dottik::Logger::FlushIfFull(const Dottik::LogType messageType) {
     if (!this->m_bInitialized)
         throw std::exception(
-            std::format("The logger instance @ {} is not initialized!", reinterpret_cast<uintptr_t>(this)).c_str());
+                std::format("The logger instance @ {} is not initialized!", reinterpret_cast<uintptr_t>(this)).c_str());
 
     if (this->m_bInstantFlush || this->m_szMessageBuffer.length() >= this->m_dwBufferSize)
         this->Flush(messageType);
@@ -100,4 +102,16 @@ void Dottik::Logger::PrintError(std::string_view sectionName, std::string_view m
     std::lock_guard lock{mutex};
     this->m_szMessageBuffer.append(std::format("[ERROR/{} -> {}] {}", sectionName, line, msg));
     this->FlushIfFull(Dottik::LogType::Error);
+}
+
+bool Dottik::Logger::IsNewLogAvailable() {
+    return !this->m_szHistoryLog.empty();
+}
+
+void Dottik::Logger::MarkRead() {
+    this->m_szHistoryLog.clear();
+}
+
+std::string &Dottik::Logger::GetHistoryLog() {
+    return this->m_szHistoryLog;
 }
