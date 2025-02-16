@@ -49,25 +49,32 @@ namespace Dottik::Graphics::Render::UI::Pages {
 
 
         if (Dottik::Logger::GetSingleton()->IsNewLogAvailable()) {
-            this->m_szLogOutput += Dottik::Logger::GetSingleton()->GetHistoryLog();
+            this->m_szLogOutput = Dottik::Logger::GetSingleton()->GetHistoryLog() + this->m_szLogOutput;
             Dottik::Logger::GetSingleton()->MarkRead();
         }
 
         ImGui::CxxInputTextMultiline("##Log", &this->m_szLogOutput, ImVec2(pContext->CurrentWindow->Size.x - 15, 200),
                                      ImGuiInputTextFlags_ReadOnly);
 
+        ImGui::BeginDisabled(this->m_szLogOutput.empty());
+        if (ImGui::Button("Clear Log")) {
+            this->m_szLogOutput.clear();
+        }
+        ImGui::EndDisabled();
+
         Renderable::Render(pContext);
     }
 
     bool MainPage::IsTargetProcessAlive() {
-        if (!this->m_pDumper->IsUsable()) {
-            auto dwProcessId = Dottik::Win32::Process::GetProcessIdByName(this->m_szTargetProcessName.c_str());
-            return dwProcessId.has_value();
-        }
+        auto dwProcessId = Dottik::Win32::Process::GetProcessIdByName(this->m_szTargetProcessName.c_str());
+        return dwProcessId.has_value();
+        //if (!this->m_pDumper->IsUsable()) {
+        //    return dwProcessId.has_value();
+        //}
 
-        DWORD exitCode{0};
-        return this->m_pDumper->GetProcessHandle() != INVALID_HANDLE_VALUE &&
-               GetExitCodeProcess(this->m_pDumper->GetProcessHandle(), &exitCode) && exitCode == STILL_ACTIVE;
+        //DWORD exitCode{0};
+        //return this->m_pDumper->GetProcessHandle() != INVALID_HANDLE_VALUE &&
+        //       GetExitCodeProcess(this->m_pDumper->GetProcessHandle(), &exitCode) && exitCode == STILL_ACTIVE;
     }
 
     void MainPage::ApplyWorkarounds() {
@@ -75,6 +82,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
     }
 
     void MainPage::DumpTarget() {
+        m_pDumper.reset();
         auto dwProcessId = Dottik::Win32::Process::GetProcessIdByName(this->m_szTargetProcessName.c_str());
 
                 ASSERT(dwProcessId.has_value() == true,
@@ -108,6 +116,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
                                   this->m_szTargetProcessName));
         }
 
+        this->m_bMonitorProcess = false;
         this->m_bCurrentlyDumpingProcess = false;
     }
 
