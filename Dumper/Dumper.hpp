@@ -12,7 +12,6 @@
 #include "Dumper/Readers/WinApi.hpp"
 #include <map>
 
-
 namespace Dottik::Dumper {
     namespace PE {
         class ImageDumper;
@@ -24,12 +23,18 @@ namespace Dottik::Dumper {
         std::uint32_t m_dwProcessId{};
         HANDLE m_hProcess{};
         bool m_bUsable;
+        bool m_bPatchDump;
+        bool m_bUseNewPatchingLogic;
 
     public:
         Dumper();
 
+        void EnableDumpPatching(bool dumpPatching);
+
         void MigrateReaderAndObtainNewHandle(std::uint32_t dwProcessId,
                                              const std::shared_ptr<Dottik::Dumper::WinApi> &reader);
+
+        void WithNewPatchingLogic(bool useNewPatchingLogic);
 
         explicit Dumper(std::uint32_t dwProcessId, const std::shared_ptr<Dottik::Dumper::WinApi> &reader);
 

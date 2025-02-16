@@ -3,6 +3,8 @@ project(PageMonitorV2)
 
 enable_language(CXX C ASM_MASM)
 
+option(CAPSTONE_X86_SUPPORT "Enable x86 capstone" ON)
+
 set(CMAKE_CXX_STANDARD 23)
 file(GLOB ASSEMBLY_FILES ${PROJECT_SOURCE_DIR}/Assembly/*.x64.asm)
 string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
@@ -79,6 +81,8 @@ add_executable(${PROJECT_NAME}
         Win32/Process.hpp
         Utilities.cpp
         Utilities.hpp
+        Dumper/SectionPatcher.cpp
+        Dumper/SectionPatcher.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_SOURCE_DIR}")
@@ -92,8 +96,6 @@ target_link_libraries(${PROJECT_NAME}
         PUBLIC
 
         capstone::capstone
-
         Imgui
-
         libassert::assert
 )

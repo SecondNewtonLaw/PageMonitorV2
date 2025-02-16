@@ -16,6 +16,8 @@
 #include <winternl.h>
 #include <Windows.h>
 
+#include "capstone/capstone.h"
+
 namespace Dottik::Dumper::PE {
     struct SectionInformation {
         void *rpSectionBegin; // Remote buffer address.
@@ -47,7 +49,13 @@ namespace Dottik::Dumper::PE {
 
         void MigrateReader(const std::shared_ptr<Dottik::Dumper::RemoteReader> &reader);
 
-        [[nodiscard]] ProcessImage GetProcessImage() const;;
+        [[nodiscard]] ProcessImage GetProcessImage() const;
+
+        void NewPatchSection(csh csh, const SectionInformation & value);
+
+        void LegacyPatchSection(csh csh, const SectionInformation & section);
+
+        void PatchImage(bool useNewPatchingLogic);
 
         void BuildInitialImage();
 

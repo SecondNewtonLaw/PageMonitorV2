@@ -86,6 +86,7 @@ namespace Dottik::Graphics::Render {
         auto &io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+        io.IniFilename = nullptr;
 
         return this->Initialize();
     }

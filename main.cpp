@@ -34,8 +34,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 return 0;
 
             g_resizeTarget = ImVec2{
-                    static_cast<float>(static_cast<UINT>(LOWORD(lParam))),
-                    static_cast<float>(static_cast<UINT>(HIWORD(lParam)))
+                static_cast<float>(static_cast<UINT>(LOWORD(lParam))),
+                static_cast<float>(static_cast<UINT>(HIWORD(lParam)))
             };
             return 0;
         case WM_SYSCOMMAND:
@@ -54,16 +54,16 @@ void RenderLoop(const bool &bRenderNext, std::shared_ptr<Dottik::Graphics::Rende
     while (bRenderNext) {
         if (0 != g_resizeTarget.x && 0 != g_resizeTarget.y) {
             renderManager->ResizeRender(
-                    static_cast<UINT>(g_resizeTarget.x), static_cast<UINT>(g_resizeTarget.y));
+                static_cast<UINT>(g_resizeTarget.x), static_cast<UINT>(g_resizeTarget.y));
             g_resizeTarget = ImVec2{0.0f, 0.0f};
         }
 
         if (renderManager->IsRenderingEnabled()) {
             renderManager->PrepareRender();
-                    ASSERT(renderManager->Render() == Dottik::Graphics::Render::RenderStatus::Success);
+            ASSERT(renderManager->Render() == Dottik::Graphics::Render::RenderStatus::Success);
         } else {
-            DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
-                      "Window Occluded [X]");
+            // DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
+            //           "Window Occluded [X]");
         }
     }
 
@@ -72,8 +72,8 @@ void RenderLoop(const bool &bRenderNext, std::shared_ptr<Dottik::Graphics::Rende
 
 void InitializeRenderGui() {
     WNDCLASSEXW wndClass = {
-            sizeof(wndClass), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr,
-            L"DottikWnd", nullptr
+        sizeof(wndClass), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr,
+        L"DottikWnd", nullptr
     };
 
     ::RegisterClassExW(&wndClass);
@@ -138,9 +138,7 @@ EnableTokenPrivilege(_In_ LPCTSTR Privilege) {
 }
 
 
-
 int wmain(const int argc, const wchar_t **argv, const wchar_t **envp) {
-
     EnableTokenPrivilege(SE_DEBUG_NAME);
     InitializeRenderGui();
 

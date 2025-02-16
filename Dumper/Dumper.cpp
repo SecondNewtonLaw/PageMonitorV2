@@ -20,12 +20,14 @@ namespace Dottik::Dumper {
         this->m_dwProcessId = dwProcessId;
         this->m_reader = reader;
         this->m_hProcess = reader->GetProcessHandle();
+        this->m_bUsable = true;
     }
 
     Dumper::Dumper(std::uint32_t dwProcessId, std::shared_ptr<Dottik::Dumper::RemoteReader> reader, HANDLE hProcess) {
         this->m_dwProcessId = dwProcessId;
         this->m_reader = std::move(reader);
         this->m_hProcess = hProcess;
+        this->m_bUsable = true;
     }
 
     std::vector<ProcessImage> Dumper::GetAllRemoteProcessModules() {
@@ -75,6 +77,9 @@ namespace Dottik::Dumper {
                         hasEncryptedSections)
                         dumper->ResolveEncryptedSections();
 
+                    if (this->m_bPatchDump)
+                        dumper->PatchImage(this->m_bUseNewPatchingLogic);
+
                     // TODO: Implement Import resolution [TODO]
 
                     return std::pair{module, dumper->GetRemoteImage()};
@@ -91,6 +96,9 @@ namespace Dottik::Dumper {
             futures.push_back(std::async(std::launch::async, [this, imageDumper, &module]() {
                 if (const auto hasEncryptedSections = imageDumper->ContainsEncryptedSections(); hasEncryptedSections)
                     imageDumper->ResolveEncryptedSections();
+
+                if (this->m_bPatchDump)
+                    imageDumper->PatchImage(this->m_bUseNewPatchingLogic);
 
                 // TODO: Implement Import resolution
 
@@ -160,6 +168,9 @@ namespace Dottik::Dumper {
                 DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
                           "Continuing resolving encrypted pages...")
                 dumper->ResolveEncryptedSections();
+
+                if (this->m_bPatchDump)
+                    dumper->PatchImage(this->m_bUseNewPatchingLogic);
             }
             auto finalImage = dumper->GetRemoteImage();
 
@@ -187,6 +198,9 @@ namespace Dottik::Dumper {
 
         if (const auto hasEncryptedSections = dumper->ContainsEncryptedSections(); hasEncryptedSections)
             dumper->ResolveEncryptedSections();
+
+        if (this->m_bPatchDump)
+            dumper->PatchImage(this->m_bUseNewPatchingLogic);
 
         this->m_moduleDumpers.emplace_back(dumper);
 
@@ -229,11 +243,19 @@ namespace Dottik::Dumper {
         this->m_bUsable = false;
     }
 
+    void Dumper::EnableDumpPatching(const bool dumpPatching) {
+        this->m_bPatchDump = dumpPatching;
+    }
+
     void Dumper::MigrateReaderAndObtainNewHandle(std::uint32_t dwProcessId,
                                                  const std::shared_ptr<Dottik::Dumper::WinApi> &reader) {
         this->m_dwProcessId = dwProcessId;
         this->m_reader = reader;
         this->m_hProcess = reader->GetProcessHandle();
+    }
+
+    void Dumper::WithNewPatchingLogic(bool useNewPatchingLogic) {
+        this->m_bUseNewPatchingLogic = useNewPatchingLogic;
     }
 } // Dumper
 // Dottik

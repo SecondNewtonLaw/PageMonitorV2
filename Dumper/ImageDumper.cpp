@@ -4,7 +4,9 @@
 
 #include "ImageDumper.hpp"
 #include "Logger.hpp"
+#include "SectionPatcher.hpp"
 #include "Utilities.hpp"
+#include "capstone/capstone.h"
 
 
 namespace Dottik::Dumper::PE {
@@ -32,6 +34,189 @@ namespace Dottik::Dumper::PE {
 
     ProcessImage ImageDumper::GetProcessImage() const {
         return this->m_procImage;
+    }
+
+    void ImageDumper::NewPatchSection(csh csh, const SectionInformation &section) {
+        /*
+         *  The section we must patch is encrypted, but we have the complete boundaries of it.
+         *  if not that disassembling like a brute would be expensive, we wouldn't be having to manage our resources that greatly.
+         *
+         *  How to find functions?
+         *      - Using call instructions we can determine function beginnings, however determining the end of functions is a completely different story.
+         *  How to find the ending of functions?
+         *      - We can iterate from the beginning of it downward, after which when we find a ret instruction, we can end the function there. However, if the function is a NO_RETURN,
+         *      this means a CALL instruction will be present followed of INT3s we must continue until we hit a sub rsp, ... instruction. This is a stack setup, which should _not_ be present on a function's end.
+         */
+
+        SectionPatcher patcher{csh, section};
+
+        for (const auto functions = patcher.FindFunctions(); const auto &function: functions) {
+            patcher.PatchFunction(function);
+            DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
+                      std::format("Patched sub_{:X}", reinterpret_cast<std::uintptr_t>(section.rpSectionBegin) +
+                          reinterpret_cast<std::uintptr_t>(section.
+                              pSectionBegin )- function.lpFunctionStart)); // Address rebasing to match PE BVA
+        }
+    }
+
+    void ImageDumper::LegacyPatchSection(const csh csh, const SectionInformation &section) {
+        /*
+         *  Port of PageMonitor V1's patcher.
+         */
+
+        const auto ModifiesProcessorFlags = [](const x86_insn &insn) {
+            return ::x86_insn::X86_INS_TEST == insn ||
+                   ::x86_insn::X86_INS_CMP == insn ||
+                   ::x86_insn::X86_INS_CMPPD == insn ||
+                   ::x86_insn::X86_INS_CMPPS == insn ||
+                   ::x86_insn::X86_INS_CMPSB == insn ||
+                   ::x86_insn::X86_INS_CMPSD == insn ||
+                   ::x86_insn::X86_INS_CMPSQ == insn ||
+                   ::x86_insn::X86_INS_CMPSS == insn ||
+                   ::x86_insn::X86_INS_CMPSW == insn ||
+                   ::x86_insn::X86_INS_CMPXCHG == insn ||
+                   ::x86_insn::X86_INS_CMPXCHG8B == insn ||
+                   ::x86_insn::X86_INS_CMPXCHG16B == insn;
+        };
+        const auto IsInterrupt = [](const x86_insn &insn) {
+            return ::x86_insn::X86_INS_INT == insn ||
+                   ::x86_insn::X86_INS_INT1 == insn ||
+                   ::x86_insn::X86_INS_INT3 == insn ||
+                   ::x86_insn::X86_INS_INTO == insn ||
+                   ::x86_insn::X86_INS_SYSCALL == insn;
+        };
+        const auto IsReturn = [](const x86_insn &insn) {
+            return ::x86_insn::X86_INS_RET == insn ||
+                   ::x86_insn::X86_INS_RETF == insn ||
+                   ::x86_insn::X86_INS_RETFQ == insn;
+        };
+        const auto IsCall = [](const x86_insn &insn) {
+            return ::x86_insn::X86_INS_CALL == insn;
+        };
+        const auto IsJump = [](const x86_insn &insn) {
+            return ::x86_insn::X86_INS_JMP == insn ||
+                   ::x86_insn::X86_INS_JAE == insn ||
+                   ::x86_insn::X86_INS_JA == insn ||
+                   ::x86_insn::X86_INS_JBE == insn ||
+                   ::x86_insn::X86_INS_JB == insn ||
+                   ::x86_insn::X86_INS_JCXZ == insn ||
+                   ::x86_insn::X86_INS_JECXZ == insn ||
+                   ::x86_insn::X86_INS_JE == insn ||
+                   ::x86_insn::X86_INS_JGE == insn ||
+                   ::x86_insn::X86_INS_JG == insn ||
+                   ::x86_insn::X86_INS_JLE == insn ||
+                   ::x86_insn::X86_INS_JL == insn ||
+                   ::x86_insn::X86_INS_JNE == insn ||
+                   ::x86_insn::X86_INS_JNO == insn ||
+                   ::x86_insn::X86_INS_JNP == insn ||
+                   ::x86_insn::X86_INS_JNS == insn ||
+                   ::x86_insn::X86_INS_JO == insn ||
+                   ::x86_insn::X86_INS_JP == insn ||
+                   ::x86_insn::X86_INS_JRCXZ == insn ||
+                   ::x86_insn::X86_INS_JS == insn;
+        };
+        const auto insn = cs_malloc(csh);
+
+        for (auto i = 0; i < section.dwSectionSize / 0x1000; i++) {
+            auto pageSize = static_cast<std::size_t>(0x1000);
+            auto startChunk = reinterpret_cast<const std::uint8_t *>(
+                reinterpret_cast<std::uintptr_t>(section.pSectionBegin) + 0x1000 * i);
+            auto currentAddress =
+                    reinterpret_cast<std::uintptr_t>(section.pSectionBegin) + 0x1000 * i;
+
+            auto PREVIOUS_INSTRUCTION = ::x86_insn::X86_INS_NOP;
+
+            while (cs_disasm_iter(csh, &startChunk, &pageSize,
+                                  &currentAddress, insn)) {
+                /*
+                 *  To determine if an INT3 is ignorable, we must first consider that if the instruction coming before an int3 is CALL or an
+                 *  instruction which causes any kind of branching, this means the instruction is LIKELY to mark the end of the function
+                 *
+                 *  OpCodes like CALL, JMP and RET may delimit functions endings if they come before INT3, but INT3 after other instructions are
+                 *  traps placed by obfuscation tools or just plain garbage we read from the proc, but bad, lol.
+                 */
+
+                constexpr auto interrupt = unsigned char{0xCC};
+
+                if ((!IsJump(PREVIOUS_INSTRUCTION) && !IsReturn(PREVIOUS_INSTRUCTION) && !IsInterrupt(
+                         PREVIOUS_INSTRUCTION) && IsInterrupt(
+                         static_cast<::x86_insn>(insn->id)) && memcmp(
+                         reinterpret_cast<void *>(insn->address + insn->size),
+                         &interrupt, 1) != 0)
+                    || (IsCall(PREVIOUS_INSTRUCTION) || ModifiesProcessorFlags(PREVIOUS_INSTRUCTION)) && IsInterrupt(
+                        static_cast<::x86_insn>(insn->id))) {
+                    /*
+                     *  The next instruction is not an interrupt, the previous instruction was not a jump (Which would denote an end in an execution block)
+                     *  - Implementation note:
+                     *      - Hyperion appears to be (IN PURPOSE) modifying CPU flags before interrupts, possibly relating to tripping
+                     *        their IC and passing the Interrupt and ignoring it if such is the case that the flag is set?
+                     *      - Hyperion appears to sometimes use the INT3 to perform return-based programming, possibly to break analysis (?)
+                     */
+
+                    memset(reinterpret_cast<void *>(insn->address), 0x90, insn->size); // Address is canonical.
+
+                    if (IsCall(PREVIOUS_INSTRUCTION) && IsInterrupt(static_cast<::x86_insn>(insn->id))) {
+                        /*
+                         *  Due to this function likely ending here, we must replace the INT3 with a ret instruction.
+                         */
+                        memset(reinterpret_cast<void *>(insn->address), 0xC3, 1);
+                    }
+
+                    if ((ModifiesProcessorFlags(PREVIOUS_INSTRUCTION)) && IsInterrupt(
+                            static_cast<::x86_insn>(insn->id))) {
+                        auto addy = insn->address;
+                        while (memcmp(reinterpret_cast<void *>(++addy), &interrupt, 1) == 0) {
+                            memset(reinterpret_cast<void *>(addy), 0x90, 1);
+                        }
+                    }
+
+                    PREVIOUS_INSTRUCTION = ::x86_insn::X86_INS_NOP;
+                    continue;
+                }
+
+                PREVIOUS_INSTRUCTION = static_cast<::x86_insn>(insn->id);
+            }
+        }
+        cs_free(insn, 1);
+    }
+
+    void ImageDumper::PatchImage(bool useNewPatchingLogic) {
+        /*
+         *  We must walk all segments which are encrypted and from them, we must get the assembly.
+         *  Once we have the assembly, we will simply find all functions, and then if one of them
+         *  has an int3 before a control-flow change occurs (i.e.: ret, jmp, jne, ...) we will simply
+         *  patch the following chain of int3 into NOP, and continue.
+         */
+
+        DottikLog(
+            Dottik::LogType::Information, Dottik::DumpingEngine,
+            "Initializing capstone...");
+
+        csh capstoneHandle{0};
+
+        if (auto status = cs_open(cs_arch::CS_ARCH_X86, cs_mode::CS_MODE_64, &capstoneHandle);
+            status != cs_err::CS_ERR_OK) {
+            throw std::exception("cannot initialize disassembler. Reason: capstone couldn't be initialized!");
+        }
+
+        cs_option(capstoneHandle, CS_OPT_DETAIL, CS_OPT_ON);
+        cs_option(capstoneHandle, CS_OPT_SKIPDATA, CS_OPT_ON);
+
+        for (const auto &section: this->GetOrGenerateSectionInformation()) {
+            if (!section.bRequiresDecryption)
+                continue;
+
+            DottikLog(
+                Dottik::LogType::Information, Dottik::DumpingEngine,
+                std::format("Beginning patching on section {}... | Section space: {} - {} | Pages: {}", section.
+                    szSectionName,
+                    section.pSectionBegin, section.pSectionEnd, section.dwSectionSize / 0x1000));
+
+            if (useNewPatchingLogic)
+                this->NewPatchSection(capstoneHandle, section);
+            else
+                this->LegacyPatchSection(capstoneHandle, section);
+        }
     }
 
     void ImageDumper::BuildInitialImage() {

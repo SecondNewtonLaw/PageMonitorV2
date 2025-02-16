@@ -23,7 +23,11 @@ namespace Dottik::Graphics::Render::UI::Pages {
         bool m_bDumpAllImages;
         bool m_bCurrentlyDumpingProcess;
         bool m_bAllowPartialDump;
+        bool m_bPatchIllegalInsturctions;
+        bool m_bUseNewPatchingLogic;
+
         std::unique_ptr<Dottik::Dumper::Dumper> m_pDumper;
+
     public:
         MainPage();
 

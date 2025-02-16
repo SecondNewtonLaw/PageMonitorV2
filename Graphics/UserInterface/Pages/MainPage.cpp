@@ -30,6 +30,17 @@ namespace Dottik::Graphics::Render::UI::Pages {
         ImGui::BulletText(
             "The dumper will dump the PE as normal. However, when the dump is attempted again, it will pick right where it left off, maintaining the pages that were decrypted of the previous dump.");
 
+        ImGui::Checkbox("Post-Dump executable patching", &this->m_bPatchIllegalInsturctions);
+        ImGui::BulletText(
+            "The dumper will look into encrypted segments after they have been partially or completely decrypted and will attempting to fix broken or illegal instruction placement, which may break analysis.");
+
+        ImGui::BeginDisabled(!this->m_bPatchIllegalInsturctions || this->m_bCurrentlyDumpingProcess);
+
+        ImGui::Checkbox("Use new patching logic", &this->m_bUseNewPatchingLogic);
+        ImGui::BulletText(
+            "The dumper will utilise the newly re-written patching logic to discern fake interrupts from real ones. Disabling this makes it fall-back to PageMonitor V1's patching implementation.\nThe legacy patcher uses one pass to determine possible fake interrupts, while the new patcher uses two passes. This makes the legacy patcher quicker than the new. However pick and choose and see what works best for the process image you're targetting.");
+
+        ImGui::EndDisabled();
         ImGui::EndDisabled();
 
         Renderable::PushSeparator();
@@ -115,6 +126,8 @@ namespace Dottik::Graphics::Render::UI::Pages {
         } else {
             m_pDumper = std::make_unique<Dottik::Dumper::Dumper>(dwProcessId.value(), winApiReader);
         }
+
+        m_pDumper->WithNewPatchingLogic(this->m_bUseNewPatchingLogic);
 
         if (this->m_bDumpAllImages) {
             const auto modules = m_pDumper->GetAllRemoteProcessModules();
