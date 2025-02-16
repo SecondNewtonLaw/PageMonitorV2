@@ -3,6 +3,8 @@
 //
 
 #include "ImageDumper.hpp"
+#include "Logger.hpp"
+#include "Utilities.hpp"
 
 
 namespace Dottik::Dumper::PE {
@@ -30,6 +32,11 @@ namespace Dottik::Dumper::PE {
         const auto &mem = peHeader.value();
 
         memcpy(this->m_remoteImage.data(), mem.data(), mem.size());
+
+        DottikLog(
+                Dottik::LogType::Information, Dottik::DumpingEngine,
+                std::format("Initial PE Image built for Module {}.",
+                            Dottik::Utilities::WcharToString(this->m_procImage.wszModuleName.c_str())));
     }
 
     void ImageDumper::ResolveInitialSections() {
@@ -50,6 +57,12 @@ namespace Dottik::Dumper::PE {
             auto read = this->m_reader->Read(section.rpSectionBegin, section.dwSectionSize);
 
             if (!read.has_value()) {
+                DottikLog(
+                        Dottik::LogType::Warning, Dottik::DumpingEngine,
+                        std::format(
+                                "A read into section {} for module {} has failed! The content in the section has been set to 0xCC!",
+                                section.szSectionName,
+                                Dottik::Utilities::WcharToString(this->m_procImage.wszModuleName.c_str())));
                 memset(section.pSectionBegin, 0xCC, section.dwSectionSize);
             } else {
                 // ASSUME(read.has_value() == true, "Failed to read section from remote process memory");
@@ -57,6 +70,10 @@ namespace Dottik::Dumper::PE {
             }
         }
 
+        DottikLog(
+                Dottik::LogType::Information, Dottik::DumpingEngine,
+                std::format("Resolved initial sections for Module {}.",
+                            Dottik::Utilities::WcharToString(this->m_procImage.wszModuleName.c_str())));
     }
 
     void ImageDumper::DecryptSection(const SectionInformation &section) {
@@ -108,8 +125,30 @@ namespace Dottik::Dumper::PE {
 
                 auto pageContent = this->m_reader->Read(rpPageAddress, 0x1000);
 
+                if (!pageContent.has_value()) {
+                    beginning++;
+                    continue;   // API failure?
+                }
+
                         ASSUME(pageContent.has_value() == true,
                                "Failed to read page. ReadProcessMemory (WinApi) failed?");
+
+                /*
+                 *  100 - pageCount
+                 *  x   - pageCount - encryptedPages.size()
+                 *  encryptedPages.size() * 100 / pageCount
+                 */
+
+                auto percentage = std::round(
+                        ((pageCount - encryptedPages.size()) * (double) 100.0 / pageCount) * (double) 10000.0) /
+                                  (double) 10000.0;
+
+                DottikLog(
+                        Dottik::LogType::Information, Dottik::DumpingEngine,
+                        std::format("Decrypted page of section '{}::{}' . {}/{} pages decrypted | {}%",
+                                    Dottik::Utilities::WcharToString(this->m_procImage.wszModuleName.c_str()),
+                                    section.szSectionName, pageCount - encryptedPages.size(), pageCount,
+                                    percentage));
 
                 memcpy(pLocalPageAddress, pageContent.value().data(), pageContent.value().size());
 
@@ -149,6 +188,11 @@ namespace Dottik::Dumper::PE {
                 start = futures.erase(start);
             }
         }
+
+        DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
+                std::format(
+                        "Resolved encrypted sections for module {}",
+                        Dottik::Utilities::WcharToString(this->m_procImage.wszModuleName.c_str())));
     }
 
     bool ImageDumper::ContainsEncryptedSections() {
