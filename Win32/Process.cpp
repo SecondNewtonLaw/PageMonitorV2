@@ -20,7 +20,7 @@ namespace Dottik::Win32::Process {
 
         std::optional<DWORD> pid{std::nullopt};
         do {
-            if (strcmp(entry.szExeFile, szProcessName) == 0) {
+            if (strcmp(entry.szExeFile, szProcessName) == 0 && entry.cntThreads != 1) {
                 pid = entry.th32ProcessID;
                 break;
             }
