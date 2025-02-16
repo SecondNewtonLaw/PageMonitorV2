@@ -28,6 +28,15 @@ namespace Dottik::Graphics::Render::UI::Pages {
                 !this->IsTargetProcessAlive() || this->m_bMonitorProcess || this->m_bCurrentlyDumpingProcess);
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.19f, 0.19f, 0.19f, 0.54f));
 
+        if (this->IsTargetProcessAlive() && this->m_bMonitorProcess && !this->m_bCurrentlyDumpingProcess) {
+            DottikLog(Dottik::LogType::Information, Dottik::MainThread,
+                      "Found target process live in memory! Beginning dump!");
+            this->m_bCurrentlyDumpingProcess = true;
+            std::thread([this]() {
+                this->DumpTarget();
+            }).detach();
+        }
+
         if (ImGui::Button("Dump")) {
             this->m_bCurrentlyDumpingProcess = true;
             std::thread([this]() {
@@ -61,11 +70,20 @@ namespace Dottik::Graphics::Render::UI::Pages {
                GetExitCodeProcess(this->m_pDumper->GetProcessHandle(), &exitCode) && exitCode == STILL_ACTIVE;
     }
 
+    void MainPage::ApplyWorkarounds() {
+        Sleep(100);
+    }
+
     void MainPage::DumpTarget() {
         auto dwProcessId = Dottik::Win32::Process::GetProcessIdByName(this->m_szTargetProcessName.c_str());
 
                 ASSERT(dwProcessId.has_value() == true,
                        "No process found. DumpTarget called with an invalid state");
+
+        this->ApplyWorkarounds();
+
+        dwProcessId = Dottik::Win32::Process::WaitForProcessToBeCreated(
+                this->m_szTargetProcessName.c_str()); // HACK: fixes issue where the PID obtained is that of an WOW64 process, for no reason.
 
         auto winApiReader = std::make_shared<Dottik::Dumper::WinApi>(dwProcessId.value());
 

@@ -32,5 +32,6 @@ namespace Dottik::Graphics::Render::UI::Pages {
 
         bool IsTargetProcessAlive();
 
+        void ApplyWorkarounds();
     };
 } // namespace RbxStu::Render::UI::Pages
