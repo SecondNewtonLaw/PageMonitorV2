@@ -134,7 +134,6 @@ namespace Dottik::Graphics::Render::UI::Pages {
                           this->m_szTargetProcessName));
         }
 
-        this->m_bMonitorProcess = false;
         this->m_bCurrentlyDumpingProcess = false;
     }
 
