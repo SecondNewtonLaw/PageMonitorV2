@@ -23,7 +23,7 @@ namespace Dottik::Graphics::Render {
             return false;
 
         const auto pages = std::vector<UI::UIPage>{
-            UI::UIPage{std::make_shared<Dottik::Graphics::Render::UI::Pages::MainPage>(), "Settings"},
+            UI::UIPage{std::make_shared<Dottik::Graphics::Render::UI::Pages::MainPage>(), "Main"},
             UI::UIPage{std::make_shared<Dottik::Graphics::Render::UI::Pages::CreditsPage>(), "Credits"},
         };
 

@@ -22,6 +22,9 @@ namespace Dottik::Graphics::Render::UI::Pages {
 
     CreditsPage::CreditsPage() {
         this->m_dottik = Collaborator::CreateCollaborator("Lead Programmer", "usrdottik", "SecondNewtonLaw", {});
+
+        this->m_sourceMaterial.emplace_back(Collaborator::CreateCollaborator(
+            "atrexus", "Unknown (for me)", "atrexus", {"Created Vulkan, the very original base of Page Monitor. "}));
     }
 
     CreditsPage::~CreditsPage() {
@@ -42,6 +45,14 @@ namespace Dottik::Graphics::Render::UI::Pages {
             for (const auto &contributor: this->m_contributorList)
                 contributor->Render(pContext);
         }
+
+        if (!this->m_sourceMaterial.empty()) {
+            ImGui::Text(">> Source Material");
+
+            for (const auto &sourceMaterialAuthors: this->m_sourceMaterial)
+                sourceMaterialAuthors->Render(pContext);
+        }
+
 
         Renderable::Render(pContext);
     }

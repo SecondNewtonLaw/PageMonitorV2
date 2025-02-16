@@ -81,7 +81,7 @@ add_executable(${PROJECT_NAME}
         Utilities.hpp
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_SOURCE_DIR}")
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/Dependencies/include)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/Dependencies/Capstone)

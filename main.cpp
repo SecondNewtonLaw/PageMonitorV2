@@ -77,7 +77,7 @@ void InitializeRenderGui() {
     };
 
     ::RegisterClassExW(&wndClass);
-    HWND hWnd = ::CreateWindowW(wndClass.lpszClassName, L"Page Monitor V2 ImGui UI", WS_OVERLAPPEDWINDOW, 100, 100,
+    HWND hWnd = ::CreateWindowW(wndClass.lpszClassName, L"Page Monitor", WS_OVERLAPPEDWINDOW, 100, 100,
                                 1280,
                                 800, nullptr, nullptr, wndClass.hInstance, nullptr);
 

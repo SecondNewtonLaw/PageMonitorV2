@@ -31,6 +31,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
 
     class CreditsPage final : public Dottik::Graphics::Render::Renderable {
         std::vector<std::shared_ptr<Collaborator> > m_contributorList;
+        std::vector<std::shared_ptr<Collaborator> > m_sourceMaterial;
         std::shared_ptr<Collaborator> m_dottik;
 
     public:

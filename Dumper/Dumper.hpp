@@ -6,19 +6,30 @@
 
 #include <cstdint>
 #include <memory>
+#include <vector>
 #include "Readers/RemoteReader.hpp"
 #include "ProcessImage.hpp"
 #include "Dumper/Readers/WinApi.hpp"
 #include <map>
 
+
 namespace Dottik::Dumper {
+    namespace PE {
+        class ImageDumper;
+    }
+
     class Dumper final {
         std::shared_ptr<Dottik::Dumper::RemoteReader> m_reader;
+        std::vector<std::shared_ptr<Dottik::Dumper::PE::ImageDumper> > m_moduleDumpers;
         std::uint32_t m_dwProcessId{};
         HANDLE m_hProcess{};
         bool m_bUsable;
+
     public:
         Dumper();
+
+        void MigrateReaderAndObtainNewHandle(std::uint32_t dwProcessId,
+                                             const std::shared_ptr<Dottik::Dumper::WinApi> &reader);
 
         explicit Dumper(std::uint32_t dwProcessId, const std::shared_ptr<Dottik::Dumper::WinApi> &reader);
 
@@ -29,14 +40,14 @@ namespace Dottik::Dumper {
 
         std::vector<ProcessImage> GetAllRemoteProcessModules();
 
-        std::vector<std::map<ProcessImage, std::byte>> DumpAllModules();
+        std::vector<std::map<ProcessImage, std::byte> > DumpAllModules();
 
         [[nodiscard]] HANDLE GetProcessHandle() const;
 
         [[nodiscard]] bool IsUsable() const;
 
-        std::vector<std::byte> DumpRemoteModule(ProcessImage &processImage);
+        std::shared_ptr<std::vector<std::byte> > DumpRemoteModule(ProcessImage &processImage);
 
-        std::vector<std::byte> DumpMainModule();
+        std::shared_ptr<std::vector<std::byte> > DumpMainModule();
     };
 }

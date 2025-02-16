@@ -22,9 +22,10 @@ namespace Dottik::Graphics::Render::UI::Pages {
         bool m_bMonitorProcess;
         bool m_bDumpAllImages;
         bool m_bCurrentlyDumpingProcess;
+        bool m_bAllowPartialDump;
         std::unique_ptr<Dottik::Dumper::Dumper> m_pDumper;
     public:
-        MainPage();;
+        MainPage();
 
         void Render(ImGuiContext *pContext) override;
 
