@@ -81,6 +81,9 @@ namespace Dottik::Dumper {
                         hasEncryptedSections)
                         dumper->ResolveEncryptedSections();
 
+                    if (this->m_bEnableRebasing)
+                        dumper->RebaseImage(reinterpret_cast<void *>(this->m_bNewPEBase));
+
                     if (this->m_bPatchDump)
                         dumper->PatchImage(this->m_bUseNewPatchingLogic);
 
@@ -103,6 +106,9 @@ namespace Dottik::Dumper {
             futures.push_back(std::async(std::launch::async, [this, imageDumper, &module]() {
                 if (const auto hasEncryptedSections = imageDumper->ContainsEncryptedSections(); hasEncryptedSections)
                     imageDumper->ResolveEncryptedSections();
+
+                if (this->m_bEnableRebasing)
+                    imageDumper->RebaseImage(reinterpret_cast<void *>(this->m_bNewPEBase));
 
                 if (this->m_bPatchDump)
                     imageDumper->PatchImage(this->m_bUseNewPatchingLogic);
@@ -171,6 +177,9 @@ namespace Dottik::Dumper {
             if (const auto hasEncryptedSections = dumper->ContainsEncryptedSections(); hasEncryptedSections) {
                 dumper->ResolveEncryptedSections();
 
+                if (this->m_bEnableRebasing)
+                    dumper->RebaseImage(reinterpret_cast<void *>(this->m_bNewPEBase));
+
                 if (this->m_bPatchDump)
                     dumper->PatchImage(this->m_bUseNewPatchingLogic);
             }
@@ -202,6 +211,9 @@ namespace Dottik::Dumper {
 
         if (const auto hasEncryptedSections = dumper->ContainsEncryptedSections(); hasEncryptedSections)
             dumper->ResolveEncryptedSections();
+
+        if (this->m_bEnableRebasing)
+            dumper->RebaseImage(reinterpret_cast<void *>(this->m_bNewPEBase));
 
         if (this->m_bPatchDump)
             dumper->PatchImage(this->m_bUseNewPatchingLogic);
@@ -256,6 +268,11 @@ namespace Dottik::Dumper {
         this->m_dwProcessId = dwProcessId;
         this->m_reader = reader;
         this->m_hProcess = reader->GetProcessHandle();
+    }
+
+    void Dumper::WithRebasingToAddress(bool enableRebasing, std::uintptr_t newBase) {
+        this->m_bEnableRebasing = enableRebasing;
+        this->m_bNewPEBase = newBase;
     }
 
     void Dumper::WithNewPatchingLogic(bool useNewPatchingLogic) {

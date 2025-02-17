@@ -48,6 +48,8 @@ namespace Dottik::Dumper::PE {
                                               std::shared_ptr<Dottik::Dumper::RemoteReader> &reader,
                                               Dottik::Dumper::Dumper *dumper);
 
+        void RebaseImage(void *lpNewBase);
+
         void MigrateImage(const ProcessImage &image);
 
         void MigrateReader(const std::shared_ptr<Dottik::Dumper::RemoteReader> &reader);

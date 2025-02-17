@@ -7,6 +7,7 @@
 #include "SectionPatcher.hpp"
 #include "Utilities.hpp"
 #include "capstone/capstone.h"
+#include "Win32/PortableExecutable.hpp"
 
 #define RVAToVA(x, y) (void *)((std::uintptr_t)(x) + y)
 #define AlignUp(x, align) (((x) + ((align)-1)) & ~((align)-1))
@@ -24,6 +25,22 @@ namespace Dottik::Dumper::PE {
             image.dwModuleSize);
         this->m_bHasProcessImageMigrated = false;
         // reserve memory to use ->data() directly on other places (because it's easier to manage lmao)
+    }
+
+    void ImageDumper::RebaseImage(void *lpNewBase) {
+        auto peWrapper = Dottik::Win32::PortableExecutable(this->m_remoteImage);
+
+        if (peWrapper.CanRelocatePE()) {
+            DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
+                      std::format("Relocating Image into new base {}", lpNewBase));
+            peWrapper.RelocatePE(lpNewBase);
+            DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
+                      std::format("Relocation completed.", lpNewBase));
+        } else {
+            DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
+                      std::format("Image cannot be relocated: Failed to find BaseRelocations Data Directory.", lpNewBase
+                      ));
+        }
     }
 
     void ImageDumper::MigrateImage(const ProcessImage &image) {
