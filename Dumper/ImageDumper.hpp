@@ -23,7 +23,8 @@ namespace Dottik::Dumper::PE {
         void *rpSectionBegin; // Remote buffer address.
         void *rpSectionEnd; // Remote buffer address.
         const char *szSectionName;
-        std::vector<std::uint32_t> decryptionTracking;
+        std::vector<std::uint32_t> encryptedPages;
+        std::vector<std::uint32_t> decryptedPages;
         bool bRequiresDecryption;
         PIMAGE_SECTION_HEADER pSectionHeader;
         PIMAGE_DOS_HEADER lpParentImageDosHeader;
@@ -55,9 +56,9 @@ namespace Dottik::Dumper::PE {
 
         void WithSectionBlacklist(const std::vector<std::string> &blacklistedSections);
 
-        void NewPatchSection(csh csh, const SectionInformation &value);
+        void FunctionPatchSection(csh csh, const SectionInformation &value);
 
-        void LegacyPatchSection(csh csh, const SectionInformation &section);
+        void PagePatchSection(csh csh, const SectionInformation &section);
 
         void PatchImage(bool useNewPatchingLogic);
 
