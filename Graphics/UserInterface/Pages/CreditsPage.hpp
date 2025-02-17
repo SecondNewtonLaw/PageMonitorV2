@@ -7,19 +7,19 @@
 
 namespace Dottik::Graphics::Render::UI::Pages {
     class Collaborator final : public Dottik::Graphics::Render::Renderable {
-        std::optional<std::string> m_szRelationWithRbxStu;
+        std::optional<std::string> m_szRelationWithProject;
         std::string m_szDiscordName;
         std::string m_szGithubName;
         std::vector<std::string> m_contributions;
 
     public:
-        static std::shared_ptr<Collaborator> CreateCollaborator(const std::optional<std::string> &relationWithRbxStu,
+        static std::shared_ptr<Collaborator> CreateCollaborator(const std::optional<std::string> &relationWithProject,
                                                                 const std::string &discordName,
                                                                 const std::string &githubName,
                                                                 const std::vector<std::string> &contributions) {
             auto collaborator = std::make_shared<Collaborator>();
 
-            collaborator->m_szRelationWithRbxStu = relationWithRbxStu;
+            collaborator->m_szRelationWithProject = relationWithProject;
             collaborator->m_szDiscordName = discordName;
             collaborator->m_szGithubName = githubName;
             collaborator->m_contributions = contributions;

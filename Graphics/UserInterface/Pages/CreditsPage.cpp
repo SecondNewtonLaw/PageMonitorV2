@@ -6,8 +6,8 @@
 
 namespace Dottik::Graphics::Render::UI::Pages {
     void Collaborator::Render(ImGuiContext *pContext) {
-        if (this->m_szRelationWithRbxStu.has_value()) {
-            ImGui::Text("%s: @%s (%s)", this->m_szRelationWithRbxStu.value().c_str(), this->m_szDiscordName.c_str(),
+        if (this->m_szRelationWithProject.has_value()) {
+            ImGui::Text("%s: @%s (%s)", this->m_szRelationWithProject.value().c_str(), this->m_szDiscordName.c_str(),
                         this->m_szGithubName.c_str());
         } else {
             ImGui::Text("@%s (%s)", this->m_szDiscordName.c_str(), this->m_szGithubName.c_str());
@@ -24,8 +24,13 @@ namespace Dottik::Graphics::Render::UI::Pages {
         this->m_dottik = Collaborator::CreateCollaborator("Lead Programmer", "usrdottik", "SecondNewtonLaw", {});
         this->m_sourceMaterial = {};
         this->m_sourceMaterial.emplace_back(Collaborator::CreateCollaborator(
-            "atrexus", "Unknown (for me)", "atrexus", {"Created Vulkan, the very original base of Page Monitor. "}));
+            "Contributor", "Unknown (for me)", "atrexus", {
+                "Created Vulkan, the very original base of Page Monitor. "
+            }));
         this->m_contributorList = {};
+        this->m_contributorList.emplace_back(Collaborator::CreateCollaborator("Contributor", "pixeluted", "Pixeluted", {
+                                                                                  "Helped with INT3 patcher by providing the method to obtain all functions in a binary, generically."
+                                                                              }));
     }
 
     CreditsPage::~CreditsPage() {
