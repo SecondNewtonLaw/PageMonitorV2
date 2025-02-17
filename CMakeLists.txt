@@ -83,6 +83,8 @@ add_executable(${PROJECT_NAME}
         Utilities.hpp
         Dumper/SectionPatcher.cpp
         Dumper/SectionPatcher.hpp
+        Win32/PortableExecutable.cpp
+        Win32/PortableExecutable.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_SOURCE_DIR}")
