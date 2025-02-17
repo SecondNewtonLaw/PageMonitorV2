@@ -93,16 +93,20 @@ namespace Dottik::Dumper::PE {
         SectionPatcher patcher{csh, section};
 
         DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
-                  "Replacing invalid functions with stubs, patching interrupts for known functions...");
+                  "Replacing invalid functions with stubs and patching interrupts for known functions. This may take a while depending on the number of functions found.");
 
         for (const auto functions = patcher.FindFunctions(); const auto &function: functions) {
             patcher.PatchFunction(function);
         }
 
         DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
-                  "Walking decrypted pages...");
+                  "Patching decrypted pages. This may take a while...");
 
         patcher.PatchPages();
+
+        DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
+                  std::format("Patches applied for module::section \"{}::{}\".", Utilities::WcharToString(this->
+                      m_procImage.wszModuleName.c_str()), section.szSectionName));
     }
 
     void ImageDumper::PatchImage(bool useNewPatchingLogic) {

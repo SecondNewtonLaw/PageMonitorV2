@@ -77,6 +77,10 @@ namespace Dottik::Dumper {
                 for (auto currentException = exceptionDirectory; currentException < newEndOfExceptionDirectory;
                      currentException
                      ++) {
+                    if (headers->OptionalHeader.SizeOfImage < currentException->BeginAddress || headers->OptionalHeader.
+                        SizeOfImage < currentException->EndAddress)
+                        continue; // Invalid garbage.
+
                     functions.emplace_back(
                         reinterpret_cast<std::uintptr_t>(this->m_sectionInformation.
                             lpParentImageDosHeader) + currentException->BeginAddress,
@@ -106,8 +110,8 @@ namespace Dottik::Dumper {
                 // This function is in a page that was not dumped by PageMonitor V2, skip the patching, or the analysis time will explode.
                 delete[] comparisonBuffer;
                 if (functionSize < 4) {
-                    DottikLog(Dottik::LogType::Warning, Dottik::DumpingEngine,
-                              "The function will not return anything, as we cannot fit the required bytes. Replaced the functions' instructions with 0xC3 (ret)")
+                    // DottikLog(Dottik::LogType::Warning, Dottik::DumpingEngine,
+                    //           "The function will not return anything, as we cannot fit the required bytes. Replaced the functions' instructions with 0xC3 (ret)")
                     memset(reinterpret_cast<void *>(function.lpFunctionStart), 0xC3, functionSize);
                     return;
                 }
@@ -118,8 +122,8 @@ namespace Dottik::Dumper {
                 *(functionStart + 2) = 0xC0;
                 *(functionStart + 3) = 0xC3;
 
-                DottikLog(Dottik::LogType::Warning, Dottik::DumpingEngine,
-                          "Added immediate xor rax, rax (48 31 C0) followed by ret (0xC3) instruction to function, as it exists in an encrypted page and may break analysis!")
+                // DottikLog(Dottik::LogType::Warning, Dottik::DumpingEngine,
+                //           "Added immediate xor rax, rax (48 31 C0) followed by ret (0xC3) instruction to function, as it exists in an encrypted page and may break analysis!")
                 return;
             }
 
@@ -166,12 +170,6 @@ namespace Dottik::Dumper {
                     }
                 }
             }
-
-            DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
-                      std::format("Patched page 0x{:X}", reinterpret_cast<std::uintptr_t>(this->m_sectionInformation.
-                              rpSectionBegin) +
-                          reinterpret_cast<std::uintptr_t>(this->m_sectionInformation.pSectionBegin) - reinterpret_cast<
-                          std::uintptr_t>(this->m_sectionInformation.pSectionBegin)+ (0x1000 * *rvaIndex)));
         }
         cs_free(insn, 1);
     }
