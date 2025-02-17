@@ -105,6 +105,21 @@ namespace Dottik::Dumper {
             if (memcmp(comparisonBuffer, reinterpret_cast<void *>(function.lpFunctionStart), functionSize) == 0) {
                 // This function is in a page that was not dumped by PageMonitor V2, skip the patching, or the analysis time will explode.
                 delete[] comparisonBuffer;
+                if (functionSize < 4) {
+                    DottikLog(Dottik::LogType::Warning, Dottik::DumpingEngine,
+                              "The function will not return anything, as we cannot fit the required bytes. Replaced the functions' instructions with 0xC3 (ret)")
+                    memset(reinterpret_cast<void *>(function.lpFunctionStart), 0xC3, functionSize);
+                    return;
+                }
+                memset(reinterpret_cast<void *>(function.lpFunctionStart), 0xC3, functionSize);
+                const auto functionStart = reinterpret_cast<std::uint8_t *>(function.lpFunctionStart);
+                *functionStart = 0x48;
+                *(functionStart + 1) = 0x31;
+                *(functionStart + 2) = 0xC0;
+                *(functionStart + 3) = 0xC3;
+
+                DottikLog(Dottik::LogType::Warning, Dottik::DumpingEngine,
+                          "Added immediate xor rax, rax (48 31 C0) followed by ret (0xC3) instruction to function, as it exists in an encrypted page and may break analysis!")
                 return;
             }
 
@@ -123,6 +138,41 @@ namespace Dottik::Dumper {
             }
         } while (false);
 
+        cs_free(insn, 1);
+    }
+
+    void SectionPatcher::PatchPages() {
+        /*
+         * The pages that remain encrypted are known in the map.
+         * We walk them all and replace interrupts with 0x90.
+         */
+
+        const auto insn = cs_malloc(this->m_csHandle);
+
+        for (auto rvaIndex = this->m_sectionInformation.decryptedPages.begin();
+             rvaIndex != this->m_sectionInformation.decryptedPages.end(); rvaIndex++) {
+            auto currentSize = static_cast<std::size_t>(0x1000);
+            auto startChunk = reinterpret_cast<const std::uint8_t *>(
+                reinterpret_cast<std::uintptr_t>(this->m_sectionInformation.pSectionBegin) + (0x1000 * *rvaIndex));
+            auto currentAddress = reinterpret_cast<std::uintptr_t>(startChunk);
+
+            while (cs_disasm_iter(this->m_csHandle, &startChunk, &currentSize,
+                                  &currentAddress, insn)) {
+                int counter = 0;
+                while (counter <= insn->detail->groups_count) {
+                    if (insn->detail->groups[counter++] == CS_GRP_INT) {
+                        memset(reinterpret_cast<void *>(insn->address), 0x90, insn->size);
+                        break;
+                    }
+                }
+            }
+
+            DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
+                      std::format("Patched page 0x{:X}", reinterpret_cast<std::uintptr_t>(this->m_sectionInformation.
+                              rpSectionBegin) +
+                          reinterpret_cast<std::uintptr_t>(this->m_sectionInformation.pSectionBegin) - reinterpret_cast<
+                          std::uintptr_t>(this->m_sectionInformation.pSectionBegin)+ (0x1000 * *rvaIndex)));
+        }
         cs_free(insn, 1);
     }
 }

@@ -29,6 +29,8 @@ namespace Dottik::Dumper {
         std::vector<Function> FindFunctions();
 
         void PatchFunction(const Function &function);
+
+        void PatchPages();
     };
 } // Dumper
 // Dottik
