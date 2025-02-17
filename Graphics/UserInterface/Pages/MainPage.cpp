@@ -32,13 +32,19 @@ namespace Dottik::Graphics::Render::UI::Pages {
 
         ImGui::Checkbox("Post-Dump executable patching", &this->m_bPatchIllegalInsturctions);
         ImGui::BulletText(
-            "The dumper will look into encrypted segments after they have been partially or completely decrypted and will attempting to fix broken or illegal instruction placement, which may break analysis.");
+            "The dumper will look into encrypted segments after they have been partially or completely decrypted and will attempting to fix broken or illegal instruction placement, which may break analysis."
+            "\nIF YOU ARE IN IDA, IT IS RECOMMENDED THAT YOU DO NOT USE THIS CHECKBOX! USING SO BREAKS IDA's SP ANALYSIS.");
 
         ImGui::BeginDisabled(!this->m_bPatchIllegalInsturctions || this->m_bCurrentlyDumpingProcess);
 
-        ImGui::Checkbox("Use new patching logic", &this->m_bUseNewPatchingLogic);
+        ImGui::Checkbox("Patch interrupts in decrypted pages", &this->m_bUsePagePatchingLogic);
         ImGui::BulletText(
-            "The dumper will utilise the newly re-written patching logic to discern fake interrupts from real ones. Disabling this makes it fall-back to PageMonitor V1's patching implementation.\nThe legacy patcher uses one pass to determine possible fake interrupts, while the new patcher uses the exception's list to determine functions and patches all interrupts contained in it with NOPs, this means that if a function has no exceptions, there is little to no chance it will be correctly patched. However pick and choose and see what works best for the process image you're targeting.");
+            "WARNING: THIS METHOD COULD YIELD A SLOWER ANALYSIS, BUT THE DUMP COULD BE OF HIGHER QUALITY!\n"
+            "The dumper will obtain functions via their exception unwinding information to patch them and fill them with stub returns to prevent NO_RETURN functions.\n"
+            "It will also fill all the pages in the decrypted pages with 0x90's instead of 0xCC as their padding for functions.\n"
+            "This improves analysis on Binary Ninja settings.\n"
+            "If disabled, only the functions found would be patched with stub returns and with their INT3s replaced by NOPs, \n"
+            "however functions inside decrypted pages which do not have exception unwinding information would not be considered if this setting is off.");
 
         ImGui::EndDisabled();
         ImGui::EndDisabled();
@@ -93,6 +99,10 @@ namespace Dottik::Graphics::Render::UI::Pages {
 
         if (Dottik::Logger::GetSingleton()->IsNewLogAvailable()) {
             this->m_szLogOutput = Dottik::Logger::GetSingleton()->GetHistoryLog() + this->m_szLogOutput;
+
+            if (this->m_szLogOutput.size() > 20000)
+                this->m_szLogOutput.resize(20000);
+
             Dottik::Logger::GetSingleton()->MarkRead();
         }
 
@@ -139,7 +149,8 @@ namespace Dottik::Graphics::Render::UI::Pages {
         }
 
         m_pDumper->WithSectionBlacklisting(this->m_bUseSectionBlacklist, this->m_szSectionBlacklist);
-        m_pDumper->WithNewPatchingLogic(this->m_bUseNewPatchingLogic);
+        m_pDumper->EnableDumpPatching(this->m_bPatchIllegalInsturctions);
+        m_pDumper->WithNewPatchingLogic(this->m_bUsePagePatchingLogic);
 
         if (this->m_bDumpAllImages) {
             const auto modules = m_pDumper->GetAllRemoteProcessModules();
@@ -174,7 +185,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
         this->m_bCurrentlyDumpingProcess = false;
         this->m_bAllowPartialDump = false;
         this->m_bPatchIllegalInsturctions = false;
-        this->m_bUseNewPatchingLogic = false;
+        this->m_bUsePagePatchingLogic = false;
         this->m_bUseSectionBlacklist = false;
         this->m_pDumper = nullptr;
     }
