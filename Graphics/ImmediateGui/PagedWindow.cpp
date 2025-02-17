@@ -20,8 +20,8 @@ namespace Dottik::Graphics::Render::UI {
         this->m_dwRowsPerColumn = rowsPerColumn;
 
         if (this->m_pages.size() % rowsPerColumn != 0) {
-            DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
-                      "Unsuitale number of rows per column for the given number of pages; Filling with stub pages!");
+            // DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
+            //           "Unsuitable number of rows per column for the given number of pages; Filling with stub pages!");
 
             const auto realOldSize = this->m_pages.size();
             auto oldSize = this->m_pages.size();
@@ -35,10 +35,10 @@ namespace Dottik::Graphics::Render::UI {
             while (oldSize++ < this->m_pages.capacity())
                 this->m_pages.emplace_back(std::make_shared<Dottik::Graphics::Render::RenderableStub>(), "~~ ~~", true);
 
-            DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
-                      std::format("Adjusted pages to render objects for proper display; Previous this->m_pages.size(): "
-                          "{:d}; Current this->m_pages.size(): {:d}",
-                          realOldSize, newSize));
+            // DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
+            //           std::format("Adjusted pages to render objects for proper display; Previous this->m_pages.size(): "
+            //               "{:d}; Current this->m_pages.size(): {:d}",
+            //               realOldSize, newSize));
         }
 
         this->m_pages.emplace_back(std::make_shared<Dottik::Graphics::Render::RenderableStub>(), "~~ ~~", true);
