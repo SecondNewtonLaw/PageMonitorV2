@@ -166,6 +166,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
     }
 
     MainPage::MainPage() {
+        this->m_szSectionBlacklist = "";
         this->m_szTargetProcessName = "";
         this->m_szLogOutput = "";
         this->m_bMonitorProcess = false;
