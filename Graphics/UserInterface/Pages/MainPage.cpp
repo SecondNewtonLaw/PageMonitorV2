@@ -38,7 +38,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
 
         ImGui::Checkbox("Use new patching logic", &this->m_bUseNewPatchingLogic);
         ImGui::BulletText(
-            "The dumper will utilise the newly re-written patching logic to discern fake interrupts from real ones. Disabling this makes it fall-back to PageMonitor V1's patching implementation.\nThe legacy patcher uses one pass to determine possible fake interrupts, while the new patcher uses two passes. This makes the legacy patcher quicker than the new. However pick and choose and see what works best for the process image you're targetting.");
+            "The dumper will utilise the newly re-written patching logic to discern fake interrupts from real ones. Disabling this makes it fall-back to PageMonitor V1's patching implementation.\nThe legacy patcher uses one pass to determine possible fake interrupts, while the new patcher uses the exception's list to determine functions and patches all interrupts contained in it with NOPs, this means that if a function has no exceptions, there is little to no chance it will be correctly patched. However pick and choose and see what works best for the process image you're targeting.");
 
         ImGui::EndDisabled();
         ImGui::EndDisabled();
@@ -98,7 +98,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
 
         Renderable::PushSeparator();
         ImGui::Text("Output Log (Console Output)");
-        ImGui::CxxInputTextMultiline("##Log", &this->m_szLogOutput, ImVec2(pContext->CurrentWindow->Size.x - 15, 500),
+        ImGui::CxxInputTextMultiline("##Log", &this->m_szLogOutput, ImVec2(pContext->CurrentWindow->Size.x - 15, 300),
                                      ImGuiInputTextFlags_ReadOnly);
 
         ImGui::BeginDisabled(this->m_szLogOutput.empty());
