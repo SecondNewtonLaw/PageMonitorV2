@@ -90,6 +90,7 @@ void InitializeRenderGui() {
     ::ShowWindow(hWnd, SW_SHOWDEFAULT);
     ::UpdateWindow(hWnd);
 
+    nRenderer->UseVsync(true);
     renderManager->InitializeWithBackend(nRenderer, hWnd, wndClass);
 
     const auto ui = new Dottik::Graphics::Render::UserInterface();
