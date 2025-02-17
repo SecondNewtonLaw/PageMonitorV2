@@ -14,6 +14,8 @@ namespace Dottik::Graphics::Render::UI::Pages {
         ImGui::Text("Target: %s", this->m_szTargetProcessName.c_str());
         Renderable::PushSeparator();
 
+        bool isTargetProcessAlive = this->IsTargetProcessAlive();
+
         ImGui::BeginDisabled(this->m_bCurrentlyDumpingProcess);
 
         ImGui::Text("Dumping Configuration");
@@ -62,10 +64,10 @@ namespace Dottik::Graphics::Render::UI::Pages {
         ImGui::EndDisabled();
 
         ImGui::BeginDisabled(
-            !this->IsTargetProcessAlive() || this->m_bMonitorProcess || this->m_bCurrentlyDumpingProcess);
+            !isTargetProcessAlive || this->m_bMonitorProcess || this->m_bCurrentlyDumpingProcess);
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.19f, 0.19f, 0.19f, 0.54f));
 
-        if (this->IsTargetProcessAlive() && this->m_bMonitorProcess && !this->m_bCurrentlyDumpingProcess) {
+        if (isTargetProcessAlive && this->m_bMonitorProcess && !this->m_bCurrentlyDumpingProcess) {
             DottikLog(Dottik::LogType::Information, Dottik::MainThread,
                       "Found target process live in memory! Beginning dump!");
             this->m_bCurrentlyDumpingProcess = true;
@@ -122,7 +124,8 @@ namespace Dottik::Graphics::Render::UI::Pages {
     }
 
     bool MainPage::IsTargetProcessAlive() {
-        return Dottik::Win32::Process::GetProcessIdByName(this->m_szTargetProcessName.c_str()).has_value();
+        return !this->m_bCurrentlyDumpingProcess && Dottik::Win32::Process::GetProcessIdByName(
+                   this->m_szTargetProcessName.c_str()).has_value();
     }
 
     void MainPage::ApplyWorkarounds() {
@@ -152,7 +155,8 @@ namespace Dottik::Graphics::Render::UI::Pages {
         m_pDumper->WithSectionBlacklisting(this->m_bUseSectionBlacklist, this->m_szSectionBlacklist);
         m_pDumper->EnableDumpPatching(this->m_bPatchIllegalInsturctions);
         m_pDumper->WithNewPatchingLogic(this->m_bUsePagePatchingLogic);
-        m_pDumper->WithRebasingToAddress(this->m_bRebaseToZero, 0x0); // TODO: Support random base addresses inputted by the user.
+        m_pDumper->WithRebasingToAddress(this->m_bRebaseToZero, 0x0);
+        // TODO: Support random base addresses inputted by the user.
 
         if (this->m_bDumpAllImages) {
             const auto modules = m_pDumper->GetAllRemoteProcessModules();
