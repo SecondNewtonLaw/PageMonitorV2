@@ -26,6 +26,7 @@ namespace Dottik::Dumper::PE {
         std::vector<std::uint32_t> decryptionTracking;
         bool bRequiresDecryption;
         PIMAGE_SECTION_HEADER pSectionHeader;
+        PIMAGE_DOS_HEADER lpParentImageDosHeader;
 
         void *pSectionBegin; // Local buffer address.
         void *pSectionEnd; // Local buffer address.

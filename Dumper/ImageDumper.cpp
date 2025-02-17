@@ -512,6 +512,7 @@ namespace Dottik::Dumper::PE {
                 decryptionList,
                 hasEncryption,
                 sectionHeader,
+                imageBase,
                 reinterpret_cast<void *>(RVAToVA(baseAddress,
                                                  sectionHeader->PointerToRawData)),
                 reinterpret_cast<void *>(sectionHeader->SizeOfRawData +
