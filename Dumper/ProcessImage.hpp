@@ -9,19 +9,17 @@
 #include <Windows.h>
 
 struct ProcessImage {
-    std::wstring wszModuleName;
-    std::wstring wszModulePath;
-    std::uint32_t dwOwnedBy;
-    std::uint32_t dwModuleSize;
-    HMODULE rhModule;
-    void *rlpModuleBase;
+    std::wstring wszModuleName = L"";
+    std::wstring wszModulePath = L"";
+    std::uint32_t dwOwnedBy{UINT_MAX};
+    std::uint32_t dwModuleSize{UINT_MAX};
+    HMODULE rhModule{nullptr};
+    void *rlpModuleBase{nullptr};
 
-    ProcessImage() {
+    ProcessImage() = default;
 
-    }
-
-    ProcessImage(wchar_t *wszModuleName, wchar_t *wszModulePath, std::uint32_t dwOwnerProcessId,
-                 std::uint32_t dwModuleSizeFromBaseAddress, HMODULE rhModule, void *rlpModuleBaseAddress) {
+    ProcessImage(const wchar_t *wszModuleName, const wchar_t *wszModulePath, const std::uint32_t dwOwnerProcessId,
+                 const std::uint32_t dwModuleSizeFromBaseAddress, const HMODULE rhModule, void *rlpModuleBaseAddress) {
         this->wszModuleName = wszModuleName;
         this->wszModulePath = wszModulePath;
         this->dwOwnedBy = dwOwnerProcessId;
