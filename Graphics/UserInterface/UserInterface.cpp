@@ -16,6 +16,7 @@
 
 namespace Dottik::Graphics::Render {
     UserInterface::UserInterface() {
+        this->m_pPagedWindow = nullptr;
     }
 
     bool UserInterface::Initialize() {
