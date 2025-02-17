@@ -80,7 +80,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
         ImGui::EndDisabled();
 
         ImGui::BeginDisabled(
-            this->m_pDumper == nullptr || !this->m_bAllowPartialDump);
+            this->m_pDumper == nullptr || !this->m_bAllowPartialDump || this->m_bCurrentlyDumpingProcess);
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.19f, 0.19f, 0.19f, 0.54f));
 
         if (ImGui::Button("Clear cached dumps")) {
