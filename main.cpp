@@ -100,6 +100,10 @@ void InitializeRenderGui() {
 
     std::thread(RenderLoop, bRenderNext, renderManager).detach();
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    DottikLog(Dottik::LogType::Information, Dottik::MainThread, "Welcome to PageMonitor V2!");
+
     while (bRenderNext) {
         _mm_pause();
 
