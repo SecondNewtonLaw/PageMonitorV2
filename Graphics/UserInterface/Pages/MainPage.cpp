@@ -51,6 +51,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
 
         ImGui::BeginDisabled(this->m_bCurrentlyDumpingProcess);
 
+        ImGui::Checkbox("Rebase to 0x0", &this->m_bRebaseToZero);
         ImGui::Checkbox("Enable Section Blacklisting", &this->m_bUseSectionBlacklist);
         ImGui::BulletText(
             "If enabled, the list below will be parsed, separating segment names by ',' and blacklisting them. By blacklisting them, all their content will be replaced with '0xCC', also known as an INT3 (debug breakpoint/__debugbreak). All the section names must be prefixed with ., as they're part of the way the sections are named themselves.");
@@ -151,6 +152,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
         m_pDumper->WithSectionBlacklisting(this->m_bUseSectionBlacklist, this->m_szSectionBlacklist);
         m_pDumper->EnableDumpPatching(this->m_bPatchIllegalInsturctions);
         m_pDumper->WithNewPatchingLogic(this->m_bUsePagePatchingLogic);
+        m_pDumper->WithRebasingToAddress(this->m_bRebaseToZero, 0x0); // TODO: Support random base addresses inputted by the user.
 
         if (this->m_bDumpAllImages) {
             const auto modules = m_pDumper->GetAllRemoteProcessModules();
@@ -187,6 +189,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
         this->m_bPatchIllegalInsturctions = false;
         this->m_bUsePagePatchingLogic = false;
         this->m_bUseSectionBlacklist = false;
+        this->m_bRebaseToZero = false;
         this->m_pDumper = nullptr;
     }
 } // namespace RbxStu::Render::UI::Pages
