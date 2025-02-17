@@ -24,7 +24,7 @@ namespace Dottik::Graphics::Render::UI {
         int m_dwRowsPerColumn = 0;
         bool m_bRenderPageList = false;
         bool m_bExclusive = false;
-        std::vector<UIPage> m_page = {};
+        std::vector<UIPage> m_pages = {};
 
     public:
         explicit PagedWindow(const std::vector<UIPage> &pages,

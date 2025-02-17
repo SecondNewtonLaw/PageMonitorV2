@@ -9,8 +9,8 @@
 
 namespace Dottik::Dumper {
     struct Function {
-        std::uintptr_t lpFunctionStart;
-        std::uintptr_t lpFunctionEnd;
+        std::uintptr_t lpFunctionStart = -1;
+        std::uintptr_t lpFunctionEnd = -1;
 
         Function() = default;
 
@@ -18,8 +18,8 @@ namespace Dottik::Dumper {
     };
 
     class SectionPatcher final {
-        csh m_csHandle;
-        PE::SectionInformation m_sectionInformation;
+        csh m_csHandle = 0;
+        PE::SectionInformation m_sectionInformation = {};
 
     public:
         SectionPatcher() = default;
