@@ -13,18 +13,18 @@ struct ImGuiContext;
 
 namespace Dottik::Graphics::Render::UI {
     struct UIPage {
-        std::shared_ptr<Dottik::Graphics::Render::Renderable> pageRenderer;
-        std::string szPageName;
+        std::shared_ptr<Dottik::Graphics::Render::Renderable> pageRenderer = nullptr;
+        std::string szPageName = "";
         bool bIsStub = false;
     };
 
     class PagedWindow final : public Dottik::Graphics::Render::Renderable {
-        std::string m_szWindowName;
-        int m_dwCurrentPageIndex;
-        int m_dwRowsPerColumn;
-        bool m_bRenderPageList;
-        std::vector<UIPage> m_pages;
-        bool m_bExclusive;
+        std::string m_szWindowName = "";
+        int m_dwCurrentPageIndex = 0;
+        int m_dwRowsPerColumn = 0;
+        bool m_bRenderPageList = false;
+        bool m_bExclusive = false;
+        std::vector<UIPage> m_page = {};
 
     public:
         explicit PagedWindow(const std::vector<UIPage> &pages,
