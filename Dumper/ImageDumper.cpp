@@ -8,6 +8,8 @@
 #include "Utilities.hpp"
 #include "capstone/capstone.h"
 
+#define RVAToVA(x, y) (void *)((std::uintptr_t)(x) + y)
+#define AlignUp(x, align) (((x) + ((align)-1)) & ~((align)-1))
 
 namespace Dottik::Dumper::PE {
     ImageDumper::ImageDumper(const ProcessImage &image, std::shared_ptr<Dottik::Dumper::RemoteReader> &reader,

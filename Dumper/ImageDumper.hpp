@@ -54,16 +54,13 @@ namespace Dottik::Dumper::PE {
 
         void WithSectionBlacklist(const std::vector<std::string> &blacklistedSections);
 
-        void NewPatchSection(csh csh, const SectionInformation & value);
+        void NewPatchSection(csh csh, const SectionInformation &value);
 
-        void LegacyPatchSection(csh csh, const SectionInformation & section);
+        void LegacyPatchSection(csh csh, const SectionInformation &section);
 
         void PatchImage(bool useNewPatchingLogic);
 
         void BuildInitialImage();
-
-#define RVAToVA(x, y) (void *)((std::uintptr_t)(x) + y)
-#define AlignUp(x, align) (((x) + ((align)-1)) & ~((align)-1))
 
         std::vector<SectionInformation> &GetOrGenerateSectionInformation();
 
