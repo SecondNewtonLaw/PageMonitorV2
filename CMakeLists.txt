@@ -33,6 +33,7 @@ if (build_type STREQUAL release)
             /DYNAMICBASE
             /HIGHENTROPYVA
             /GUARD:CF
+            /SUBSYSTEM:WINDOWS
             /VERBOSE
     )
 endif ()
