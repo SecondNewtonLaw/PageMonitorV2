@@ -19,12 +19,17 @@ namespace Dottik::Dumper::PE {
         this->m_reader = reader;
         this->m_dumper = dumper;
 
+        this->m_bStubByte = 0xC3;
         this->m_sectionBlacklist = {};
         this->m_remoteImage = std::make_shared<std::vector<std::byte> >();
         this->m_remoteImage->resize(
             image.dwModuleSize);
         this->m_bHasProcessImageMigrated = false;
         // reserve memory to use ->data() directly on other places (because it's easier to manage lmao)
+    }
+
+    void ImageDumper::WithStubByte(std::uint8_t stub) {
+        this->m_bStubByte = stub;
     }
 
     void ImageDumper::RebaseImage(void *lpNewBase) {
@@ -74,7 +79,7 @@ namespace Dottik::Dumper::PE {
          *      We replaced all the yap above with exception unwinding information. Amazing.
          */
 
-        SectionPatcher patcher{csh, section};
+        SectionPatcher patcher{csh, section, this->m_bStubByte};
 
         for (const auto functions = patcher.FindFunctions(); const auto &function: functions) {
             patcher.PatchFunction(function);
@@ -90,7 +95,7 @@ namespace Dottik::Dumper::PE {
          *  The idea is simple. We must find all functions using exception unwinding info and patch them as normal, however for the next step we must also walk the entirety of the decrypted pages
          *  to replace all INT3s with RETs.
          */
-        SectionPatcher patcher{csh, section};
+        SectionPatcher patcher{csh, section, this->m_bStubByte};
 
         DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
                   "Replacing invalid functions with stubs and patching interrupts for known functions. This may take a while depending on the number of functions found.");
@@ -339,7 +344,8 @@ namespace Dottik::Dumper::PE {
     std::vector<SectionInformation> GenerateInitialSectionInformation(
         const std::shared_ptr<std::vector<std::byte> > &remoteImage,
         const std::shared_ptr<Dottik::Dumper::RemoteReader> &reader,
-        const std::vector<std::string> &blacklistedSections
+        const std::vector<std::string> &blacklistedSections,
+        const std::uint8_t stubByte
     ) {
         const auto baseAddress = reinterpret_cast<std::uintptr_t>(remoteImage->data());
         const auto imageBase = reinterpret_cast<PIMAGE_DOS_HEADER>(baseAddress);
@@ -394,7 +400,7 @@ namespace Dottik::Dumper::PE {
                     hasEncryption = true;
                     memset(reinterpret_cast<void *>(RVAToVA(baseAddress,
                                                             sectionHeader->PointerToRawData)),
-                           0xCC, // fill with breakpoints.
+                           stubByte, // fill with breakpoints.
                            sectionHeader->SizeOfRawData);
                     break;
                 }
@@ -464,7 +470,7 @@ namespace Dottik::Dumper::PE {
              */
 
             this->m_remoteImageSections = GenerateInitialSectionInformation(
-                this->m_remoteImage, this->m_reader, this->m_sectionBlacklist);
+                this->m_remoteImage, this->m_reader, this->m_sectionBlacklist, this->m_bStubByte);
 
             return this->m_remoteImageSections;
         }

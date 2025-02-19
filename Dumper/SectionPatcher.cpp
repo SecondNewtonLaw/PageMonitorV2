@@ -14,9 +14,10 @@ namespace Dottik::Dumper {
         this->lpFunctionEnd = functionEnd;
     }
 
-    SectionPatcher::SectionPatcher(const csh &csh, const PE::SectionInformation &sectionData) {
+    SectionPatcher::SectionPatcher(const csh &csh, const PE::SectionInformation &sectionData, std::uint8_t stubByte) {
         this->m_csHandle = csh;
         this->m_sectionInformation = sectionData;
+        this->m_bStubByte = stubByte;
     }
 
     std::vector<Function> SectionPatcher::FindFunctions() {
@@ -104,7 +105,7 @@ namespace Dottik::Dumper {
             auto functionSize = static_cast<std::size_t>(function.lpFunctionEnd - function.lpFunctionStart);
 
             const auto comparisonBuffer = new std::uint8_t[functionSize];
-            memset(comparisonBuffer, 0xCC, functionSize);
+            memset(comparisonBuffer, this->m_bStubByte, functionSize);
 
             if (memcmp(comparisonBuffer, reinterpret_cast<void *>(function.lpFunctionStart), functionSize) == 0) {
                 // This function is in a page that was not dumped by PageMonitor V2, skip the patching, or the analysis time will explode.
@@ -115,7 +116,7 @@ namespace Dottik::Dumper {
                     memset(reinterpret_cast<void *>(function.lpFunctionStart), 0xC3, functionSize);
                     return;
                 }
-                memset(reinterpret_cast<void *>(function.lpFunctionStart), 0xC3, functionSize);
+                // memset(reinterpret_cast<void *>(function.lpFunctionStart), 0xC3, functionSize);
                 const auto functionStart = reinterpret_cast<std::uint8_t *>(function.lpFunctionStart);
                 *functionStart = 0x48;
                 *(functionStart + 1) = 0x31;

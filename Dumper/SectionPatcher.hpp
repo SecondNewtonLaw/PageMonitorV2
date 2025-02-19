@@ -20,11 +20,12 @@ namespace Dottik::Dumper {
     class SectionPatcher final {
         csh m_csHandle = 0;
         PE::SectionInformation m_sectionInformation = {};
+        std::uint8_t m_bStubByte;
 
     public:
         SectionPatcher() = default;
 
-        SectionPatcher(const csh &csh, const PE::SectionInformation &sectionData);
+        SectionPatcher(const csh &csh, const PE::SectionInformation &sectionData, std::uint8_t stubByte);
 
         std::vector<Function> FindFunctions();
 

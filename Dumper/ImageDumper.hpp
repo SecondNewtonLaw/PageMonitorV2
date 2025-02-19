@@ -42,11 +42,14 @@ namespace Dottik::Dumper::PE {
         std::shared_ptr<Dottik::Dumper::RemoteReader> m_reader;
         bool m_bHasProcessImageMigrated;
         std::vector<std::string> m_sectionBlacklist;
+        std::uint8_t m_bStubByte;
 
     public:
         [[maybe_unused]] explicit ImageDumper(const ProcessImage &image,
                                               std::shared_ptr<Dottik::Dumper::RemoteReader> &reader,
                                               Dottik::Dumper::Dumper *dumper);
+
+        void WithStubByte(std::uint8_t stub);
 
         void RebaseImage(void *lpNewBase);
 
