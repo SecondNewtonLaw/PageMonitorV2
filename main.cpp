@@ -142,19 +142,24 @@ EnableTokenPrivilege(_In_ LPCTSTR Privilege) {
     return false;
 }
 
+int CommonEntryPoint() {
+    EnableTokenPrivilege(SE_DEBUG_NAME);
+    InitializeRenderGui();
+
+    return 0;
+}
 
 int CALLBACK WinMain(
     HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
     LPSTR lpCmdLine,
     int nCmdShow) {
-    EnableTokenPrivilege(SE_DEBUG_NAME);
-    InitializeRenderGui();
+    return CommonEntryPoint();
 }
 
 int wmain(const int argc, const wchar_t **argv, const wchar_t **envp) {
     // auto winApiReader = std::make_shared<Dottik::Dumper::WinApi>(GetProcessIdByName("RobloxPlayerBeta.exe"));
     // Dottik::Dumper::Dumper dumper{GetProcessIdByName("RobloxPlayerBeta.exe"), winApiReader};
     // dumper.DumpAllModules();
-    return 0;
+    return CommonEntryPoint();
 }
