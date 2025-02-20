@@ -99,7 +99,7 @@ namespace Dottik::Dumper {
             if (this->m_bUseSectionBlacklist)
                 imageDumper->WithSectionBlacklist(this->m_blacklistedSections);
 
-            dumper->WithStubByte(this->m_bStubByte);
+            imageDumper->WithStubByte(this->m_bStubByte);
             imageDumper->BuildInitialImage();
 
             imageDumper->ResolveInitialSections();
