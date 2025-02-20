@@ -68,7 +68,7 @@ void RenderLoop(const bool &bRenderNext, std::shared_ptr<Dottik::Graphics::Rende
             // DottikLog(Dottik::LogType::Warning, Dottik::Rendering,
             //           "Window Occluded [X]");
         }
-        Sleep(6);
+        Sleep(1);
     }
 
     renderManager->CleanUp();
@@ -110,7 +110,7 @@ void InitializeRenderGui() {
     DottikLog(Dottik::LogType::Information, Dottik::MainThread, "Welcome to PageMonitor V2!");
 
     while (bRenderNext) {
-        Sleep(16);
+        Sleep(1);
         _mm_pause();
 
         MSG msg;
