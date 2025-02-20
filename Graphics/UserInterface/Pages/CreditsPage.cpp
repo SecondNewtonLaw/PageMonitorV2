@@ -27,10 +27,14 @@ namespace Dottik::Graphics::Render::UI::Pages {
             "Contributor", "Unknown (for me)", "atrexus", {
                 "Created Vulkan, the very original base of Page Monitor. "
             }));
-        this->m_contributorList = {};
-        this->m_contributorList.emplace_back(Collaborator::CreateCollaborator("Contributor", "pixeluted", "Pixeluted", {
-                                                                                  "Helped with INT3 patcher by providing the method to obtain all functions in a binary, generically."
-                                                                              }));
+        this->m_contributorList = {
+            Collaborator::CreateCollaborator("Contributor", "pixeluted", "Pixeluted", {
+                                                 "Helped with INT3 patcher by providing the method to obtain all functions in a binary, generically."
+                                             }),
+            Collaborator::CreateCollaborator("Contributor", "makesuredidedies", "MakeSureDudeDies", {
+                                                 "Open Source project https://github.com/MakeSureDudeDies/HookChecker helped to learn how to walk exports."
+                                             }),
+        };
     }
 
     CreditsPage::~CreditsPage() {
