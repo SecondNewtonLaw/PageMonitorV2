@@ -17,18 +17,18 @@
 
 namespace Dottik::Graphics::Render::UI::Pages {
     class MainPage final : public Dottik::Graphics::Render::Renderable {
-        std::string m_szSectionBlacklist;
-        std::string m_szTargetProcessName;
-        std::string m_szLogOutput;
-        bool m_bMonitorProcess;
-        bool m_bDumpAllImages;
-        bool m_bCurrentlyDumpingProcess;
-        bool m_bAllowPartialDump;
-        bool m_bPatchIllegalInsturctions;
-        bool m_bUsePagePatchingLogic;
-        bool m_bUseSectionBlacklist;
-        bool m_bRebaseToZero;
-        bool m_bEnableInterruptStub;
+        std::string m_szSectionBlacklist{""};
+        std::string m_szTargetProcessName{""};
+        std::string m_szLogOutput{""};
+        bool m_bMonitorProcess{false};
+        bool m_bDumpAllImages{false};
+        bool m_bCurrentlyDumpingProcess{false};
+        bool m_bAllowPartialDump{false};
+        bool m_bPatchIllegalInsturctions{false};
+        bool m_bUsePagePatchingLogic{false};
+        bool m_bUseSectionBlacklist{false};
+        bool m_bRebaseToZero{false};
+        bool m_bEnableInterruptStub{false};
 
         std::unique_ptr<Dottik::Dumper::Dumper> m_pDumper;
 
