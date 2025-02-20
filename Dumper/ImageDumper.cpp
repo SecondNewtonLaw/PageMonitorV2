@@ -32,6 +32,11 @@ namespace Dottik::Dumper::PE {
         this->m_bStubByte = stub;
     }
 
+    std::map<std::string, void *> ImageDumper::GetExports() {
+        auto peWrapper = Dottik::Win32::PortableExecutable(this->m_remoteImage);
+        return peWrapper.GetExports();
+    }
+
     void ImageDumper::RebaseImage(void *lpNewBase) {
         auto peWrapper = Dottik::Win32::PortableExecutable(this->m_remoteImage);
 

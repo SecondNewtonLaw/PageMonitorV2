@@ -4,6 +4,7 @@
 
 #include "PortableExecutable.hpp"
 
+#include <map>
 #include <libassert/assert.hpp>
 
 namespace Dottik::Win32 {
@@ -48,7 +49,8 @@ namespace Dottik::Win32 {
                                       ImageBase;
 
         while (currentRelocationOffset < relocations->Size) {
-            const auto lpImageBaseRelocation = reinterpret_cast<PIMAGE_BASE_RELOCATION>(reinterpret_cast<std::uintptr_t>(baseRelocaton.value()) + currentRelocationOffset);
+            const auto lpImageBaseRelocation = reinterpret_cast<PIMAGE_BASE_RELOCATION>(
+                reinterpret_cast<std::uintptr_t>(baseRelocaton.value()) + currentRelocationOffset);
             currentRelocationOffset += sizeof(IMAGE_BASE_RELOCATION);
             const auto dwNumberOfEntries = (lpImageBaseRelocation->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof
                                            (IMAGE_RELOCATION_ENTRY);
@@ -72,6 +74,56 @@ namespace Dottik::Win32 {
         }
 
         this->m_peNTHeader->OptionalHeader.ImageBase = reinterpret_cast<std::uintptr_t>(newBaseAddress);
+    }
+
+    std::map<std::string, void *> PortableExecutable::GetExports() {
+        ASSUME(this->m_peNTHeader->OptionalHeader.NumberOfRvaAndSizes >= 0, "RVA + Sizes are less or equal to 0?");
+        ASSERT(this->HasDataDirectory(Dottik::Win32::DataDirectoryEntry::ExportDirectory),
+               "No export directory present on image");
+
+        auto possibleExports = this->VAToRawDataPointer(
+            this->GetDataDirectoryEntry(Dottik::Win32::DataDirectoryEntry::ExportDirectory)->VirtualAddress);
+
+        ASSERT(possibleExports.has_value(), "No exports could be found when converting the RVA to RawDataAddress");
+
+        const auto lpExports = static_cast<PIMAGE_EXPORT_DIRECTORY>(possibleExports.value());
+
+        ASSERT(lpExports->NumberOfFunctions >= lpExports->NumberOfNames, "NumberOfFunctions < NumberOfNames; No clue how this can be handled lmao.");
+
+        // Assuming that the function[i] == name[nameordinal[i]]
+
+        const auto exportedFunctionsOptional = this->VAToRawDataPointer(lpExports->AddressOfFunctions);
+        const auto exportedFunctionNamesOptional = this->VAToRawDataPointer(lpExports->AddressOfNames);
+        const auto exportedFunctionNameOrdinalsOptional = this->VAToRawDataPointer(lpExports->AddressOfNameOrdinals);
+
+        if (!exportedFunctionNamesOptional.has_value() || !exportedFunctionNameOrdinalsOptional.has_value() || !exportedFunctionsOptional.has_value())
+            return {};  // Cannot parse exports, failed to convert RVA->FileAddress. Is the export table corrupted?
+
+        const auto exportedFunctionPointersRvaTable = static_cast<std::uint32_t *>(exportedFunctionsOptional.value());
+        const auto exportedFunctionNamesRvaTable = static_cast<std::uint32_t *>(exportedFunctionNamesOptional.value());
+        const auto exportedFunctionNameOrdinalsRvaTable = static_cast<std::uint16_t *>(
+            exportedFunctionNameOrdinalsOptional.value());
+
+        auto exportsMap = std::map<std::string, void *>();
+
+        for (auto i = 0; i < lpExports->NumberOfNames; i++) {
+            const auto possibleExportName = this->VAToRawDataPointer(
+                exportedFunctionNamesRvaTable[i]);
+
+            ASSERT(possibleExportName.has_value(), "Failed to retrieve export name RVA in exports table.");
+
+            const auto functionPointerTableIndex = exportedFunctionNameOrdinalsRvaTable[i];
+            // Ordinal is the index into the actual func table.
+
+            const auto possibleFunctionAddress = this->VAToRawDataPointer(
+                exportedFunctionPointersRvaTable[functionPointerTableIndex]);
+
+            ASSERT(possibleFunctionAddress.has_value(), "Failed to retrieve function pointer from RVA table");
+
+            exportsMap[static_cast<char *>(possibleExportName.value())] = possibleFunctionAddress.value();
+        }
+
+        return exportsMap;
     }
 
     std::optional<void *> PortableExecutable::VAToRawDataPointer(const std::uint32_t relativeVirtualAddress) {

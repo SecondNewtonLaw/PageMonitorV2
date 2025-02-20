@@ -51,6 +51,8 @@ namespace Dottik::Dumper::PE {
 
         void WithStubByte(std::uint8_t stub);
 
+        std::map<std::string, void*> GetExports();
+
         void RebaseImage(void *lpNewBase);
 
         void MigrateImage(const ProcessImage &image);

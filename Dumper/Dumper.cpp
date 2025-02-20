@@ -185,6 +185,7 @@ namespace Dottik::Dumper {
 
                 if (this->m_bPatchDump)
                     dumper->PatchImage(this->m_bUseNewPatchingLogic);
+
             }
             auto finalImage = dumper->GetRemoteImage();
 

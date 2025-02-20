@@ -3,7 +3,9 @@
 //
 
 #pragma once
+#include <complex.h>
 #include <cstddef>
+#include <map>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -43,15 +45,17 @@ namespace Dottik::Win32 {
     public:
         PortableExecutable() = default;
 
-        explicit PortableExecutable(const std::shared_ptr<std::vector<std::byte>> &rawPE);
+        explicit PortableExecutable(const std::shared_ptr<std::vector<std::byte> > &rawPE);
 
-        bool HasDataDirectory(Dottik::Win32::DataDirectoryEntry entry) const;
+        [[nodiscard]] bool HasDataDirectory(Dottik::Win32::DataDirectoryEntry entry) const;
 
         PIMAGE_DATA_DIRECTORY GetDataDirectoryEntry(Dottik::Win32::DataDirectoryEntry entry);
 
-        bool CanRelocatePE() const;
+        [[nodiscard]] bool CanRelocatePE() const;
 
         void RelocatePE(void *newBaseAddress);
+
+        std::map<std::string, void *> GetExports();
 
         std::optional<void *> VAToRawDataPointer(std::uint32_t relativeVirtualAddress);
     };
