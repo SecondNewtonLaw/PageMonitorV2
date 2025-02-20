@@ -1,4 +1,6 @@
 #include <iostream>
+#include <isa_availability.h>
+
 
 #include "AssemblyObfuscations.hpp"
 #include "Logger.hpp"
@@ -16,6 +18,7 @@
 #include <memory>
 #include <thread>
 #include <TlHelp32.h>
+#include <Assembly/Themida/SecureEngineMacros.h>
 
 ImVec2 g_resizeTarget;
 
@@ -145,6 +148,16 @@ EnableTokenPrivilege(_In_ LPCTSTR Privilege) {
 }
 
 int CommonEntryPoint() {
+    if (!__check_isa_support(__IA_SUPPORT_VECTOR128)) {
+        STR_ENCRYPT_START;
+        MessageBox(nullptr,
+                   "Your CPU may not be supported."
+                   " Please send @usrdottik a screenshot of CPU-Z with your CPU features, or contact him on the discord server to allow him to change the project settings to compile to your target CPU.\n"
+                   "Cheers, Dottik",
+                   "Error", MB_ICONERROR | MB_OK);
+        STR_ENCRYPT_END;
+    }
+
     EnableTokenPrivilege(SE_DEBUG_NAME);
     InitializeRenderGui();
 
