@@ -4,11 +4,13 @@
 
 #include "MainPage.hpp"
 #include "Logger.hpp"
+#include <Assembly/Themida/SecureEngineMacros.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <thread>
 
 namespace Dottik::Graphics::Render::UI::Pages {
     void MainPage::Render(ImGuiContext *pContext) {
+        STR_ENCRYPT_START;
         ImGui::Text("Process Name: ");
         ImGui::CxxInputText("##ProcessName", &this->m_szTargetProcessName);
         ImGui::Text("Target: %s", this->m_szTargetProcessName.c_str());
@@ -16,10 +18,13 @@ namespace Dottik::Graphics::Render::UI::Pages {
 
         bool isTargetProcessAlive = this->IsTargetProcessAlive();
 
-        ImGui::BeginDisabled(this->m_bCurrentlyDumpingProcess);
-
         ImGui::Text("Dumping Configuration");
         ImGui::Text("Allows you to configure how PageMonitor V2 dumps images from memory");
+
+        ImGui::Text("IDA Support: Enable *Post-Dump executable patching* to be able to boot binaries in it if the binary crashes without it.");
+        ImGui::Text("Binary Ninja Support: N/A; *Post-Dump executable patching* yields better analysis results with *Patch interrupts in decrypted pages*.");
+
+        ImGui::BeginDisabled(this->m_bCurrentlyDumpingProcess);
 
         ImGui::Checkbox("Process Monitoring", &this->m_bMonitorProcess);
         ImGui::BulletText("Waits until the process opens before beginning to monitor pages.");
@@ -32,10 +37,15 @@ namespace Dottik::Graphics::Render::UI::Pages {
         ImGui::BulletText(
             "The dumper will dump the PE as normal. However, when the dump is attempted again, it will pick right where it left off, maintaining the pages that were decrypted of the previous dump.");
 
+        ImGui::Checkbox("Stub byte used on encrypted pages", &this->m_bEnableInterruptStub);
+        ImGui::BulletText(
+            "If enabled, it makes the stub byte used for encrypted pages become NOP (0x90). If disabled, falls back to utilising INT3 (0x90).\n"
+            "WARNING: The usage of this mode is only recommended if Post-Dump executable patching is enabled. If not extremely long analysis time\n"
+            "may occur due to .pdata containing functions which are just literally a NOP chain. Patching replaces these functions with return 0 stubs.");
+
         ImGui::Checkbox("Post-Dump executable patching", &this->m_bPatchIllegalInsturctions);
         ImGui::BulletText(
-            "The dumper will look into encrypted segments after they have been partially or completely decrypted and will attempting to fix broken or illegal instruction placement, which may break analysis."
-            "\nIF YOU ARE IN IDA, IT IS RECOMMENDED THAT YOU DO NOT USE THIS CHECKBOX! USING SO BREAKS IDA's SP ANALYSIS.");
+            "The dumper will look into encrypted segments after they have been partially or completely decrypted and will attempting to fix broken or illegal instruction placement, which may break analysis in some disassemblers or confuse them.");
 
         ImGui::BeginDisabled(!this->m_bPatchIllegalInsturctions || this->m_bCurrentlyDumpingProcess);
 
@@ -121,6 +131,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
         ImGui::EndDisabled();
 
         Renderable::Render(pContext);
+        STR_ENCRYPT_END;
     }
 
     bool MainPage::IsTargetProcessAlive() {
@@ -158,6 +169,10 @@ namespace Dottik::Graphics::Render::UI::Pages {
         m_pDumper->WithRebasingToAddress(this->m_bRebaseToZero, 0x0);
         // TODO: Support random base addresses inputted by the user.
 
+        if (this->m_bEnableInterruptStub) {
+            m_pDumper->WithStubByte(0x90);
+        }
+
         if (this->m_bDumpAllImages) {
             const auto modules = m_pDumper->GetAllRemoteProcessModules();
             m_pDumper->DumpAllModules();
@@ -174,6 +189,10 @@ namespace Dottik::Graphics::Render::UI::Pages {
             DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,
                       std::format("Dumped {} into ./dump_out/{}!", this->m_szTargetProcessName,
                           this->m_szTargetProcessName));
+        }
+
+        if (this->m_bEnableInterruptStub) {
+            m_pDumper->WithStubByte(0xCC);
         }
 
         DottikLog(Dottik::LogType::Information, Dottik::DumpingEngine,

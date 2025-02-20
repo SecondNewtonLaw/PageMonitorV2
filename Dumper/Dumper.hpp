@@ -29,6 +29,7 @@ namespace Dottik::Dumper {
         bool m_bEnableRebasing = false;
         std::vector<std::string> m_blacklistedSections = {};
         std::uintptr_t m_bNewPEBase = 0;
+        std::uint8_t m_bStubByte;
 
     public:
         Dumper();
@@ -41,6 +42,8 @@ namespace Dottik::Dumper {
         void WithRebasingToAddress(bool enableRebasing, std::uintptr_t newBase);
 
         void WithNewPatchingLogic(bool useNewPatchingLogic);
+
+        void WithStubByte(std::uint8_t stubByte);
 
         void WithSectionBlacklisting(bool useSectionBlacklist, const std::string &blacklistedSections);
 

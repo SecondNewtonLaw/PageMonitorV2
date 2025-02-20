@@ -73,6 +73,7 @@ namespace Dottik::Dumper {
                 // The section blacklist should already be OK.
                 if (this->m_bUseSectionBlacklist)
                     dumper->WithSectionBlacklist(this->m_blacklistedSections);
+                dumper->WithStubByte(this->m_bStubByte);
                 dumper->MigrateImage(module);
                 dumper->MigrateReader(this->m_reader);
                 dumper->GetOrGenerateSectionInformation();
@@ -98,6 +99,7 @@ namespace Dottik::Dumper {
             if (this->m_bUseSectionBlacklist)
                 imageDumper->WithSectionBlacklist(this->m_blacklistedSections);
 
+            dumper->WithStubByte(this->m_bStubByte);
             imageDumper->BuildInitialImage();
 
             imageDumper->ResolveInitialSections();
@@ -171,6 +173,7 @@ namespace Dottik::Dumper {
             // Blacklist should already be set.
             if (this->m_bUseSectionBlacklist)
                 dumper->WithSectionBlacklist(this->m_blacklistedSections);
+            dumper->WithStubByte(this->m_bStubByte);
             dumper->MigrateImage(processImage);
             dumper->MigrateReader(this->m_reader);
             dumper->GetOrGenerateSectionInformation();
@@ -204,6 +207,7 @@ namespace Dottik::Dumper {
         dumper = std::make_shared<Dottik::Dumper::PE::ImageDumper>(processImage, this->m_reader, this);
         if (this->m_bUseSectionBlacklist)
             dumper->WithSectionBlacklist(this->m_blacklistedSections);
+        dumper->WithStubByte(this->m_bStubByte);
         dumper->BuildInitialImage();
 
         dumper->ResolveInitialSections();
@@ -277,6 +281,10 @@ namespace Dottik::Dumper {
 
     void Dumper::WithNewPatchingLogic(bool useNewPatchingLogic) {
         this->m_bUseNewPatchingLogic = useNewPatchingLogic;
+    }
+
+    void Dumper::WithStubByte(std::uint8_t stubByte) {
+        this->m_bStubByte = stubByte;
     }
 
     void Dumper::WithSectionBlacklisting(bool useSectionBlacklist, const std::string &blacklistedSections) {

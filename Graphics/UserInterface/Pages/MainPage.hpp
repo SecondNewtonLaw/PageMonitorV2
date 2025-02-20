@@ -28,6 +28,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
         bool m_bUsePagePatchingLogic;
         bool m_bUseSectionBlacklist;
         bool m_bRebaseToZero;
+        bool m_bEnableInterruptStub;
 
         std::unique_ptr<Dottik::Dumper::Dumper> m_pDumper;
 
