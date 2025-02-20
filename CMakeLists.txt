@@ -23,7 +23,7 @@ if (build_type STREQUAL release)
             /GF
             /GL
             /cgthreads8
-            /arch:AVX2
+            /arch:AVX
     )
 
     add_link_options(
