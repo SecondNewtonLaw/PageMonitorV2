@@ -37,7 +37,7 @@ void Dottik::Logger::Flush(const Dottik::LogType messageType) {
             break;
     }
 
-    this->m_szHistoryLog += this->m_szMessageBuffer + "\r\n";
+    this->m_szHistoryLog = this->m_szMessageBuffer + "\r\n" + this->m_szHistoryLog;
     this->m_szMessageBuffer.clear();
 }
 
