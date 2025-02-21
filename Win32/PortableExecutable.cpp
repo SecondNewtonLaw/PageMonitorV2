@@ -5,6 +5,7 @@
 #include "PortableExecutable.hpp"
 
 #include <map>
+#include <unordered_set>
 #include <libassert/assert.hpp>
 
 namespace Dottik::Win32 {
@@ -88,7 +89,7 @@ namespace Dottik::Win32 {
 
         const auto lpExports = static_cast<PIMAGE_EXPORT_DIRECTORY>(possibleExports.value());
 
-        ASSERT(lpExports->NumberOfFunctions >= lpExports->NumberOfNames, "NumberOfFunctions < NumberOfNames; No clue how this can be handled lmao.");
+        // ASSERT(lpExports->NumberOfFunctions >= lpExports->NumberOfNames, "NumberOfFunctions < NumberOfNames; No clue how this can be handled lmao.");
 
         // Assuming that the function[i] == name[nameordinal[i]]
 
@@ -96,8 +97,9 @@ namespace Dottik::Win32 {
         const auto exportedFunctionNamesOptional = this->VAToRawDataPointer(lpExports->AddressOfNames);
         const auto exportedFunctionNameOrdinalsOptional = this->VAToRawDataPointer(lpExports->AddressOfNameOrdinals);
 
-        if (!exportedFunctionNamesOptional.has_value() || !exportedFunctionNameOrdinalsOptional.has_value() || !exportedFunctionsOptional.has_value())
-            return {};  // Cannot parse exports, failed to convert RVA->FileAddress. Is the export table corrupted?
+        if (!exportedFunctionNamesOptional.has_value() || !exportedFunctionNameOrdinalsOptional.has_value() || !
+            exportedFunctionsOptional.has_value())
+            return {}; // Cannot parse exports, failed to convert RVA->FileAddress. Is the export table corrupted?
 
         const auto exportedFunctionPointersRvaTable = static_cast<std::uint32_t *>(exportedFunctionsOptional.value());
         const auto exportedFunctionNamesRvaTable = static_cast<std::uint32_t *>(exportedFunctionNamesOptional.value());
@@ -121,6 +123,31 @@ namespace Dottik::Win32 {
             ASSERT(possibleFunctionAddress.has_value(), "Failed to retrieve function pointer from RVA table");
 
             exportsMap[static_cast<char *>(possibleExportName.value())] = possibleFunctionAddress.value();
+        }
+
+        if (lpExports->NumberOfNames != lpExports->NumberOfFunctions) {
+            // Due to the size mismatch, it is highly likely that we are dealing with functions which are exported by ordinal
+            // rather than by name, achievable using .def files with NONAME attributes (MS excuse to "save space").
+            // because of it we must re-walk the table of function pointers to get the proper function pointer.
+
+            std::unordered_set<std::uint16_t> alreadyTraversedOrdinalIndexes{};
+            alreadyTraversedOrdinalIndexes.reserve(lpExports->NumberOfNames);
+
+            for (auto i = 0; i < lpExports->NumberOfNames; i++)
+                alreadyTraversedOrdinalIndexes.emplace(exportedFunctionNameOrdinalsRvaTable[i]);
+
+            for (auto i = 0; i < lpExports->NumberOfFunctions; i++) {
+                if (alreadyTraversedOrdinalIndexes.contains(i))
+                    continue;
+                const auto possibleExportAddress = this->VAToRawDataPointer(
+                    exportedFunctionPointersRvaTable[i]);
+
+                if (!possibleExportAddress.has_value())
+                    continue;
+
+
+                exportsMap[std::format("ordinal_subroutine_{:X}", exportedFunctionPointersRvaTable[i])] = possibleExportAddress.value();
+            }
         }
 
         return exportsMap;
