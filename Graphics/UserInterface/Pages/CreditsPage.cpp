@@ -15,7 +15,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
 
         if (!this->m_contributions.empty())
             for (const auto &contribution: this->m_contributions)
-                ImGui::Text(std::format(" ~ {}", contribution).c_str());
+                ImGui::Text("%s", std::format(" ~ {}", contribution).c_str());
 
         Renderable::Render(pContext);
     }
@@ -24,7 +24,7 @@ namespace Dottik::Graphics::Render::UI::Pages {
         this->m_dottik = Collaborator::CreateCollaborator("Lead Programmer", "usrdottik", "SecondNewtonLaw", {});
         this->m_sourceMaterial = {};
         this->m_sourceMaterial.emplace_back(Collaborator::CreateCollaborator(
-            "Contributor", "Unknown (for me)", "atrexus", {
+            "Contributor", "atrexuss", "atrexus", {
                 "Created Vulkan, the very original base of Page Monitor. "
             }));
         this->m_contributorList = {
